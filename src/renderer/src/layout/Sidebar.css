@@ -1,0 +1,84 @@
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: #fff;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid #e8e8e8;
+}
+
+.sidebar__header {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
+}
+
+.sidebar__logo {
+    width: 35px;
+    height: 35px;
+    object-fit: cover;
+}
+
+.sidebar__header-title {
+    font-family: 'Itim', cursive;
+    font-size: 3rem;
+    font-weight: 400;
+    color: #fff;
+}
+
+.sidebar__menu {
+    border-top: 1px solid #e8e8e8;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    gap: 20px;
+    background-color: #253c53;
+}
+
+.sidebar__menu-item {
+    width: 90%;
+    padding: 10px 24px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    gap: 15px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.sidebar__menu-item.sidebar__menu-item--active {
+    background-color: #0062e5;
+    color: #fff;
+}
+
+.sidebar__menu-item.sidebar__menu-item--active .sidebar__menu-item-icon {
+    color: #fff;
+}
+
+.sidebar__menu-item:hover {
+    background-color: #0062e5;
+    color: #fff;
+}
+
+.sidebar__menu-item:hover .sidebar__menu-item-icon {
+    color: #fff;
+}
+
+.sidebar__menu-item-icon {
+    font-size: 20px;
+    justify-self: flex-start;
+    width: 20px;
+    color: #fff;
+}
