@@ -71,9 +71,9 @@ function Sidebar() {
                     Đăng ký xe
                 </Link>
                 <Link
-                    to="/dashboard/car-rental"
+                    to="/dashboard/rental-vehicle"
                     className={`sidebar__menu-item ${
-                        location.pathname === '/dashboard/car-rental'
+                        location.pathname === '/dashboard/rental-vehicle'
                             ? 'sidebar__menu-item--active'
                             : ''
                     }`}
