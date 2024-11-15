@@ -1,17 +1,14 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import Pagination from '../Pagination'
 
-const ClientBillModal = ({ onClose }) => {
+function ClientTravelRouteDetail({ onClose }) {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 5
 
-    const mockData = [...Array(20)].map((_, index) => ({
+    const mockData = [...Array(38)].map((_, index) => ({
         id: index + 1,
-        invoiceNumber: 1000 + index,
-        invoiceType: 'Hóa đơn điện tử',
-        totalAmount: 1000000 + index,
-        paymentMethod: 'Chuyển khoản',
-        invoiceDate: '2024-01-01'
+        place: 'Hà Nội',
+        time: '12/12/2024'
     }))
 
     const totalPages = Math.ceil(mockData.length / itemsPerPage)
@@ -29,31 +26,22 @@ const ClientBillModal = ({ onClose }) => {
         },
         [totalPages]
     )
+
     return (
         <div className="modal-client-content">
-            <div className="modal-client-bill-table">
+            <div className="modal-client-travel-route-detail-table">
                 <table className="page-table">
                     <thead>
                         <tr>
-                            <th>Mã hóa đơn</th>
-                            <th>Loại hóa đơn</th>
-                            <th>Tổng tiền</th>
-                            <th>Phương thức</th>
-                            <th>Ngày hóa đơn</th>
-                            <th>Chi tiết</th>
+                            <th>Địa điểm</th>
+                            <th>Thời gian</th>
                         </tr>
                     </thead>
                     <tbody>
                         {currentData.map((item) => (
                             <tr key={item.id}>
-                                <td>{item.invoiceNumber}</td>
-                                <td>{item.invoiceType}</td>
-                                <td>{item.totalAmount}</td>
-                                <td>{item.paymentMethod}</td>
-                                <td>{item.invoiceDate}</td>
-                                <td>
-                                    <button className="primary-button detail-btn">Chi tiết</button>
-                                </td>
+                                <td>{item.place}</td>
+                                <td>{item.time}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -73,4 +61,4 @@ const ClientBillModal = ({ onClose }) => {
     )
 }
 
-export default ClientBillModal
+export default ClientTravelRouteDetail

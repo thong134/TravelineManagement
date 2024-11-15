@@ -11,6 +11,8 @@ import Modal from '../../components/Modal'
 import ClientDetailModal from '../../components/ClientComponent/ClientDetailModal'
 import ClientBillModal from '../../components/ClientComponent/ClientBillModal'
 import ClientTravelPointModal from '../../components/ClientComponent/ClientTravelPointModal'
+import ClientTravelRouteModal from '../../components/ClientComponent/ClientTravelRouteModal'
+import ClientAddVoucherModal from '../../components/ClientComponent/ClientAddVoucherModal'
 import './Client.css'
 
 const Client = () => {
@@ -18,6 +20,8 @@ const Client = () => {
     const [userDetail, setUserDetail] = useState(null)
     const [clientBillModal, setClientBillModal] = useState(false)
     const [clientTravelPointModal, setClientTravelPointModal] = useState(false)
+    const [clientTravelRouteModal, setClientTravelRouteModal] = useState(false)
+    const [clientAddVoucherModal, setClientAddVoucherModal] = useState(false)
     const itemsPerPage = 8
 
     const mockData = [...Array(20)].map((_, index) => ({
@@ -49,7 +53,9 @@ const Client = () => {
     return (
         <div className="client-page">
             <div className="client-page__header">
-                <button className="primary-button">Thêm voucher</button>
+                <button className="primary-button" onClick={() => setClientAddVoucherModal(true)}>
+                    Thêm voucher
+                </button>
                 <div className="client-page__filters">
                     <button className="page__header-button">
                         <FontAwesomeIcon icon={faArrowUpWideShort} className="page__header-icon" />
@@ -81,7 +87,7 @@ const Client = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {currentData.map((item) => (
+                        {currentData.map((item, index) => (
                             <tr key={item.id}>
                                 <td>{item.id}</td>
                                 <td>{item.name}</td>
@@ -97,7 +103,11 @@ const Client = () => {
                                             icon={faEllipsisVertical}
                                             className="table__action-icon"
                                         />
-                                        <div className={`table__action-menu`}>
+                                        <div
+                                            className={`table__action-menu ${
+                                                (index + 1) % itemsPerPage === 0 ? 'show-top' : ''
+                                            }`}
+                                        >
                                             <div
                                                 className="table__action-item"
                                                 onClick={() => setUserDetail(item)}
@@ -116,7 +126,10 @@ const Client = () => {
                                             >
                                                 Điểm du lịch
                                             </div>
-                                            <div className="table__action-item">
+                                            <div
+                                                className="table__action-item"
+                                                onClick={() => setClientTravelRouteModal(true)}
+                                            >
                                                 Lộ trình du lịch
                                             </div>
                                         </div>
@@ -139,7 +152,7 @@ const Client = () => {
                 showHeader={false}
                 width="580px"
             >
-                <ClientDetailModal userDetail={userDetail} />
+                <ClientDetailModal userDetail={userDetail} onClose={() => setUserDetail(null)} />
             </Modal>
             {/* Modal hóa đơn */}
             <Modal
@@ -148,7 +161,7 @@ const Client = () => {
                 showHeader={false}
                 width="700px"
             >
-                <ClientBillModal />
+                <ClientBillModal onClose={() => setClientBillModal(false)} />
             </Modal>
             {/* Modal điểm du lịch */}
             <Modal
@@ -157,7 +170,25 @@ const Client = () => {
                 showHeader={false}
                 width="580px"
             >
-                <ClientTravelPointModal />
+                <ClientTravelPointModal onClose={() => setClientTravelPointModal(false)} />
+            </Modal>
+            {/* Modal lộ trình du lịch */}
+            <Modal
+                isOpen={clientTravelRouteModal}
+                onClose={() => setClientTravelRouteModal(false)}
+                showHeader={false}
+                width="580px"
+            >
+                <ClientTravelRouteModal onClose={() => setClientTravelRouteModal(false)} />
+            </Modal>
+            {/* Modal thêm voucher */}
+            <Modal
+                isOpen={clientAddVoucherModal}
+                onClose={() => setClientAddVoucherModal(false)}
+                showHeader={false}
+                width="500px"
+            >
+                <ClientAddVoucherModal onClose={() => setClientAddVoucherModal(false)} />
             </Modal>
         </div>
     )

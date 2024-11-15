@@ -1,8 +1,8 @@
 import React from 'react'
 
-const ClientDetailModal = ({ userDetail }) => {
+const ClientDetailModal = ({ userDetail, setUserDetail }) => {
     return (
-        <div className="modal-user-detail-content">
+        <div className="modal-client-detail-content">
             <div className="row w-100">
                 <div className="col-5">
                     <label htmlFor="name" className="label-for-input">
@@ -181,7 +181,7 @@ const ClientDetailModal = ({ userDetail }) => {
                     </div>
                 </div>
             </div>
-            <div className="modal-user-detail-footer">
+            <div className="modal-client-footer-buttons">
                 <button className="page__header-button" onClick={() => setUserDetail(null)}>
                     Đóng
                 </button>

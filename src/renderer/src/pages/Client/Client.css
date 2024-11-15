@@ -24,10 +24,15 @@
     margin-top: 10px;
 }
 
-.modal-user-detail-footer {
+.modal-client-detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal-client-footer-buttons {
     display: flex;
     justify-content: center;
-    margin-top: 10px;
 }
 
 .modal-client-content {
@@ -44,4 +49,21 @@
 .modal-client-travel-point-table {
     flex: 1;
     min-height: 330px;
+}
+
+.modal-client-travel-route-detail-table {
+    flex: 1;
+    min-height: 295px;
+}
+
+.modal-client-add-voucher {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal-client-add-voucher-footer-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }

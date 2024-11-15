@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import Pagination from '../Pagination'
 
-function ClientTravelPointModal() {
+function ClientTravelPointModal({ onClose }) {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 5
 
@@ -44,7 +44,7 @@ function ClientTravelPointModal() {
                     </thead>
                     <tbody>
                         {currentData.map((item) => (
-                            <tr>
+                            <tr key={item.id}>
                                 <td>{item.date}</td>
                                 <td>{item.type}</td>
                                 <td>{item.detail}</td>
@@ -62,6 +62,11 @@ function ClientTravelPointModal() {
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
             />
+            <div className="modal-client-footer-buttons">
+                <button className="page__header-button" onClick={onClose}>
+                    Đóng
+                </button>
+            </div>
         </div>
     )
 }
