@@ -29,3 +29,19 @@
     justify-content: center;
     margin-top: 10px;
 }
+
+.modal-client-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal-client-bill-table {
+    flex: 1;
+    min-height: 330px;
+}
+
+.modal-client-travel-point-table {
+    flex: 1;
+    min-height: 330px;
+}

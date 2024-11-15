@@ -8,11 +8,16 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import Pagination from '../../components/Pagination'
 import Modal from '../../components/Modal'
+import ClientDetailModal from '../../components/ClientComponent/ClientDetailModal'
+import ClientBillModal from '../../components/ClientComponent/ClientBillModal'
+import ClientTravelPointModal from '../../components/ClientComponent/ClientTravelPointModal'
 import './Client.css'
 
 const Client = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const [userDetail, setUserDetail] = useState(null)
+    const [clientBillModal, setClientBillModal] = useState(false)
+    const [clientTravelPointModal, setClientTravelPointModal] = useState(false)
     const itemsPerPage = 8
 
     const mockData = [...Array(20)].map((_, index) => ({
@@ -99,8 +104,18 @@ const Client = () => {
                                             >
                                                 Thông tin
                                             </div>
-                                            <div className="table__action-item">Hóa đơn</div>
-                                            <div className="table__action-item">Điểm du lịch</div>
+                                            <div
+                                                className="table__action-item"
+                                                onClick={() => setClientBillModal(true)}
+                                            >
+                                                Hóa đơn
+                                            </div>
+                                            <div
+                                                className="table__action-item"
+                                                onClick={() => setClientTravelPointModal(true)}
+                                            >
+                                                Điểm du lịch
+                                            </div>
                                             <div className="table__action-item">
                                                 Lộ trình du lịch
                                             </div>
@@ -122,193 +137,27 @@ const Client = () => {
                 isOpen={!!userDetail}
                 onClose={() => setUserDetail(null)}
                 showHeader={false}
-                width="520px"
+                width="580px"
             >
-                <div className="modal-user-detail-content">
-                    <div className="row w-100">
-                        <div className="col-5">
-                            <label htmlFor="name" className="label-for-input">
-                                Tên người dùng
-                            </label>
-                            <div className="input-form">
-                                <input
-                                    className="w-100"
-                                    type="text"
-                                    id="name"
-                                    value={userDetail?.name}
-                                    disabled
-                                />
-                            </div>
-                        </div>
-                        <div className="col-7">
-                            <label htmlFor="username" className="label-for-input">
-                                Tên đăng nhập
-                            </label>
-                            <div className="input-form">
-                                <input
-                                    className="w-100"
-                                    type="text"
-                                    id="username"
-                                    value={userDetail?.username}
-                                    disabled
-                                />
-                            </div>
-                        </div>
-                        <div className="col-5">
-                            <label htmlFor="identityCard" className="label-for-input">
-                                Số CCCD
-                            </label>
-                            <div className="input-form">
-                                <input
-                                    className="w-100"
-                                    type="text"
-                                    id="identityCard"
-                                    value={userDetail?.identityCard}
-                                    disabled
-                                />
-                            </div>
-                        </div>
-                        <div className="col-7">
-                            <label htmlFor="address" className="label-for-input">
-                                Địa chỉ
-                            </label>
-                            <div className="input-form">
-                                <input
-                                    className="w-100"
-                                    type="text"
-                                    id="address"
-                                    value={userDetail?.address}
-                                    disabled
-                                />
-                            </div>
-                        </div>
-                        <div className="col-5 row">
-                            <div className="col-5">
-                                <label htmlFor="gender" className="label-for-input">
-                                    Giới tính
-                                </label>
-                                <div className="input-form">
-                                    <input
-                                        className="w-100"
-                                        type="text"
-                                        id="gender"
-                                        value={userDetail?.gender}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                            <div className="col-7">
-                                <label htmlFor="birthday" className="label-for-input">
-                                    Ngày sinh
-                                </label>
-                                <div className="input-form">
-                                    <input
-                                        className="w-100"
-                                        type="text"
-                                        id="birthday"
-                                        value={userDetail?.birthday}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-7 row">
-                            <div className="col-6">
-                                <label htmlFor="phoneNumber" className="label-for-input">
-                                    Số điện thoại
-                                </label>
-                                <div className="input-form">
-                                    <input
-                                        className="w-100"
-                                        type="text"
-                                        id="phoneNumber"
-                                        value={userDetail?.phoneNumber}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                            <div className="col-6">
-                                <label htmlFor="nationality" className="label-for-input">
-                                    Quốc tịch
-                                </label>
-                                <div className="input-form">
-                                    <input
-                                        className="w-100"
-                                        type="text"
-                                        id="nationality"
-                                        value={userDetail?.nationality}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-5 row">
-                            <div className="col-5">
-                                <label htmlFor="driver" className="label-for-input">
-                                    Chủ xe
-                                </label>
-                                <div className="input-form">
-                                    <input
-                                        className="w-100"
-                                        type="text"
-                                        id="driver"
-                                        value={userDetail?.driver}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                            <div className="col-7">
-                                <label htmlFor="joinDate" className="label-for-input">
-                                    Ngày tham gia
-                                </label>
-                                <div className="input-form">
-                                    <input
-                                        className="w-100"
-                                        type="text"
-                                        id="joinDate"
-                                        value={userDetail?.joinDate}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-7 row">
-                            <div className="col-6">
-                                <label htmlFor="invoiceNumber" className="label-for-input">
-                                    Số hóa đơn
-                                </label>
-                                <div className="input-form">
-                                    <input
-                                        className="w-100"
-                                        type="text"
-                                        id="invoiceNumber"
-                                        value={userDetail?.invoiceNumber}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                            <div className="col-6">
-                                <label htmlFor="travelPoint" className="label-for-input">
-                                    Điểm du lịch
-                                </label>
-                                <div className="input-form">
-                                    <input
-                                        className="w-100"
-                                        type="text"
-                                        id="travelPoint"
-                                        value={userDetail?.travelPoint}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="modal-user-detail-footer">
-                        <button className="page__header-button" onClick={() => setUserDetail(null)}>
-                            Đóng
-                        </button>
-                    </div>
-                </div>
+                <ClientDetailModal userDetail={userDetail} />
+            </Modal>
+            {/* Modal hóa đơn */}
+            <Modal
+                isOpen={clientBillModal}
+                onClose={() => setClientBillModal(false)}
+                showHeader={false}
+                width="700px"
+            >
+                <ClientBillModal />
+            </Modal>
+            {/* Modal điểm du lịch */}
+            <Modal
+                isOpen={clientTravelPointModal}
+                onClose={() => setClientTravelPointModal(false)}
+                showHeader={false}
+                width="580px"
+            >
+                <ClientTravelPointModal />
             </Modal>
         </div>
     )

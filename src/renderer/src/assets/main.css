@@ -130,6 +130,12 @@
     box-shadow: 0px 3px 4px 0px rgba(0, 0, 0, 0.3);
 }
 
+.primary-button.detail-btn {
+    padding: 8px 4px;
+    box-shadow: none;
+    min-width: 80px;
+}
+
 .page__header-button {
     display: flex;
     align-items: center;
