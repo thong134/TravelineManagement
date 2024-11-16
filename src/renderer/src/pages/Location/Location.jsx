@@ -42,15 +42,15 @@ const Location = () => {
         [totalPages]
     )
     return (
-        <div className="client-page">
-            <div className="client-page__header">
+        <div className="page">
+            <div className="page__header">
                 <button
                     className="primary-button"
                     onClick={() => setCreUpLocationModal({ isOpen: true, type: 'create' })}
                 >
                     Thêm địa điểm
                 </button>
-                <div className="client-page__filters">
+                <div className="page__filters">
                     <button className="page__header-button">
                         <FontAwesomeIcon icon={faArrowUpWideShort} className="page__header-icon" />
                         Sắp xếp
@@ -65,8 +65,8 @@ const Location = () => {
                     </div>
                 </div>
             </div>
-            <div className="client-page__content">
-                <table className="page-table client-table">
+            <div className="page__content">
+                <table className="page-table ">
                     <thead>
                         <tr>
                             <th>Mã địa điểm</th>

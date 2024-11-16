@@ -51,12 +51,12 @@ const Client = () => {
         [totalPages]
     )
     return (
-        <div className="client-page">
-            <div className="client-page__header">
+        <div className="page">
+            <div className="page__header">
                 <button className="primary-button" onClick={() => setClientAddVoucherModal(true)}>
                     Thêm voucher
                 </button>
-                <div className="client-page__filters">
+                <div className="page__filters">
                     <button className="page__header-button">
                         <FontAwesomeIcon icon={faArrowUpWideShort} className="page__header-icon" />
                         Sắp xếp
@@ -71,7 +71,7 @@ const Client = () => {
                     </div>
                 </div>
             </div>
-            <div className="client-page__content">
+            <div className="page__content">
                 <table className="page-table client-table">
                     <thead>
                         <tr>

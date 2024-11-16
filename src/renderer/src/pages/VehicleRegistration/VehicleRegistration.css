@@ -1,0 +1,22 @@
+.page-table.vehicle-registration-table td:nth-child(7),
+.page-table.vehicle-registration-table th:nth-child(7) {
+    text-align: center;
+}
+
+.page-table.vehicle-registration-table tbody td {
+    max-width: 120px;
+}
+
+.vehicle-registration-modal {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.vehicle-registration-modal__btns {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}

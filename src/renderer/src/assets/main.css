@@ -1,5 +1,7 @@
 @import './base.css';
 
+/* Related to Table */
+
 .page-table {
     width: 100%;
     border-collapse: separate;
@@ -24,6 +26,13 @@
 
 .page-table td {
     font-size: 1.4rem;
+}
+
+.page-table tbody td {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .page-table tbody tr {
@@ -90,11 +99,29 @@
 }
 
 .table__status {
-    padding: 2px 4px;
+    padding: 4px 6px;
     border-radius: 16px;
     text-align: center;
     font-size: 1.2rem;
+    overflow: hidden;
 }
+
+.table__status.completed {
+    background-color: #e7f8f0;
+    color: #41c588;
+}
+
+.table__status.processing {
+    background-color: #e8f1fd;
+    color: #448df2;
+}
+
+.table__status.reject {
+    background-color: #feeceb;
+    color: #f36960;
+}
+
+/* Related to Input */
 
 .label-for-input {
     font-size: 1.4rem;
@@ -121,9 +148,7 @@
     padding: 0px 5px;
 }
 
-.shadow-none {
-    box-shadow: none !important;
-}
+/* Related to Button */
 
 .primary-button {
     background-color: #1366d9;
@@ -140,16 +165,27 @@
     box-shadow: 0px 3px 4px 0px rgba(0, 0, 0, 0.3);
 }
 
-/* .primary-button.md {
-    padding: 8px 16px;
-} */
-
 .primary-button.delete-btn {
     background-color: #fe5555;
 }
 
 .primary-button.create-btn {
     background-color: #008000;
+}
+
+.primary-button.completed {
+    background-color: #e7f8f0;
+    color: #41c588;
+}
+
+.primary-button.processing {
+    background-color: #e8f1fd;
+    color: #448df2;
+}
+
+.primary-button.reject {
+    background-color: #feeceb;
+    color: #f36960;
 }
 
 .primary-button.detail-btn {
@@ -173,6 +209,8 @@
     color: #fff;
     border: 1px solid #1366d9;
 }
+
+/* Related to page */
 
 .page__header-button {
     display: flex;
@@ -206,4 +244,44 @@
     width: 100%;
     padding: 10px 15px;
     font-size: 1.6rem;
+}
+
+.page {
+    padding: 5px 10px 20px 10px;
+    height: calc(100vh - var(--main-header-height));
+    display: flex;
+    flex-direction: column;
+}
+
+.page__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+}
+
+.page__filters {
+    display: flex;
+    gap: 10px;
+}
+
+.page__content {
+    flex: 1;
+    min-height: 0;
+    margin-bottom: 15px;
+    margin-top: 10px;
+}
+
+/* Related to Image/Video */
+
+.modal__uploaded-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal__vid-img-container {
+    height: 120px;
+    border-radius: 10px;
+    overflow: hidden;
 }
