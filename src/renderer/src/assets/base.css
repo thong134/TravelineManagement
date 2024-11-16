@@ -76,6 +76,13 @@ input[disabled] {
     background-color: #fff;
 }
 
+textarea {
+    border: none;
+    outline: none;
+    padding: 8px 4px;
+    font-family: 'Open Sans', sans-serif;
+}
+
 .w-100 {
     width: 100%;
 }
@@ -89,7 +96,7 @@ input[disabled] {
 }
 
 .p-0 {
-    padding: 0;
+    padding: 0 !important;
 }
 
 .m-1 {
@@ -210,6 +217,14 @@ input[disabled] {
 
 .pl-3 {
     padding-left: 1.5rem;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.flex-column {
+    flex-direction: column;
 }
 
 .row {

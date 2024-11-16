@@ -1,0 +1,109 @@
+/* CreUpLocation Modal */
+.cre-up-location-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    min-height: 450px;
+}
+
+.cre-up-location-modal__tabs {
+    display: flex;
+    gap: 15px;
+}
+
+.cre-up-location-modal__footer {
+    padding: 10px 0;
+    display: flex;
+    gap: 15px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cre-up-location-modal__btns {
+    display: flex;
+    gap: 15px;
+}
+
+.cre-up-location-modal__description {
+    display: flex;
+    flex-direction: column;
+}
+
+.cre-up-location-modal__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Image Content */
+
+.location-modal__image-container {
+    height: 120px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.location-modal__uploaded-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.location-modal__image-upload-box {
+    height: 120px;
+    border: 2px solid #b5bfde;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #f7f7f9;
+}
+
+.location-modal__image-upload-box:hover {
+    border-color: #1366d9;
+}
+
+.location-modal__upload-icon {
+    font-size: 3rem;
+    color: #1366d9;
+}
+
+.location-modal__uploaded-image {
+    transition: transform 0.3s ease;
+}
+
+.location-modal__image-container:hover .location-modal__uploaded-image-options {
+    display: flex;
+}
+
+.location-modal__image-container:hover .location-modal__uploaded-image {
+    transform: scale(1.05);
+}
+
+.location-modal__uploaded-image-options {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: none;
+    gap: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 25px 5px;
+}
+
+.uploaded-image-option__btn {
+    flex: 1;
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid #fff;
+    color: #fff;
+    cursor: pointer;
+    background-color: transparent;
+    font-size: 1.4rem;
+}

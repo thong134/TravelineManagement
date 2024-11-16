@@ -9,7 +9,7 @@ export default function Home() {
                     <h1 className="home-item-title">Tổng quan hôm nay</h1>
                     <div className="detailed-overview">
                         {Array.from({ length: 6 }).map((_, index) => (
-                            <div className="overview-item">
+                            <div className="overview-item" key={index}>
                                 <div className="overview-item-title">
                                     <p className="overview-item-title-text">Số lượt</p>
                                     <h2 className="overview-item-title-subtext">Truy cập</h2>
