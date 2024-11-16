@@ -2,19 +2,22 @@ import { useState, useRef, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCirclePlus } from '@fortawesome/free-solid-svg-icons'
 
-const CreUpLocation = ({ type }) => {
+const CreUpLocation = ({ type, location = null, onClose }) => {
     const [activeTab, setActiveTab] = useState('info')
+    const [locationInfo, setLocationInfo] = useState(location || {})
     const [images, setImages] = useState([])
+    const [videos, setVideos] = useState([])
+    const videoInputRef = useRef(null)
     const fileInputRef = useRef(null)
 
     useEffect(() => {
-        console.log(images)
         return () => {
             images.forEach((image) => {
                 URL.revokeObjectURL(image.preview)
             })
+            videos.forEach((video) => URL.revokeObjectURL(video.preview))
         }
-    }, [images])
+    }, [])
 
     const handleImageUpload = (e) => {
         const files = Array.from(e.target.files)
@@ -26,8 +29,32 @@ const CreUpLocation = ({ type }) => {
         e.target.value = ''
     }
 
-    const handleImageClick = (index) => {
-        // Xử lý khi click vào hình ảnh (có thể thêm chức năng xem/xóa)
+    const handleDeleteImage = (index) => {
+        setImages((prev) => {
+            const newImages = [...prev]
+            URL.revokeObjectURL(newImages[index].preview)
+            newImages.splice(index, 1)
+            return newImages
+        })
+    }
+
+    const handleVideoUpload = (e) => {
+        const files = Array.from(e.target.files)
+        const newVideos = files.map((file) => ({
+            file,
+            preview: URL.createObjectURL(file)
+        }))
+        setVideos((prev) => [...prev, ...newVideos])
+        e.target.value = ''
+    }
+
+    const handleDeleteVideo = (index) => {
+        setVideos((prev) => {
+            const newVideos = [...prev]
+            URL.revokeObjectURL(newVideos[index].preview)
+            newVideos.splice(index, 1)
+            return newVideos
+        })
     }
 
     return (
@@ -69,6 +96,13 @@ const CreUpLocation = ({ type }) => {
                                         type="text"
                                         id="locationName"
                                         placeholder="Nhập tên địa điểm"
+                                        value={locationInfo?.locationName || ''}
+                                        onChange={(e) =>
+                                            setLocationInfo({
+                                                ...locationInfo,
+                                                locationName: e.target.value
+                                            })
+                                        }
                                     />
                                 </div>
                             </div>
@@ -82,6 +116,13 @@ const CreUpLocation = ({ type }) => {
                                         type="text"
                                         id="province"
                                         placeholder="Nhập tên tỉnh"
+                                        value={locationInfo?.province || ''}
+                                        onChange={(e) =>
+                                            setLocationInfo({
+                                                ...locationInfo,
+                                                province: e.target.value
+                                            })
+                                        }
                                     />
                                 </div>
                             </div>
@@ -95,6 +136,13 @@ const CreUpLocation = ({ type }) => {
                                         type="text"
                                         id="district"
                                         placeholder="Nhập tên Huyện/Thành phố"
+                                        value={locationInfo?.district || ''}
+                                        onChange={(e) =>
+                                            setLocationInfo({
+                                                ...locationInfo,
+                                                district: e.target.value
+                                            })
+                                        }
                                     />
                                 </div>
                             </div>
@@ -108,6 +156,13 @@ const CreUpLocation = ({ type }) => {
                                         type="text"
                                         id="longitude"
                                         placeholder="Nhập kinh độ"
+                                        value={locationInfo?.longitude || ''}
+                                        onChange={(e) =>
+                                            setLocationInfo({
+                                                ...locationInfo,
+                                                longitude: e.target.value
+                                            })
+                                        }
                                     />
                                 </div>
                             </div>
@@ -121,6 +176,13 @@ const CreUpLocation = ({ type }) => {
                                         type="text"
                                         id="latitude"
                                         placeholder="Nhập vĩ độ"
+                                        value={locationInfo?.latitude || ''}
+                                        onChange={(e) =>
+                                            setLocationInfo({
+                                                ...locationInfo,
+                                                latitude: e.target.value
+                                            })
+                                        }
                                     />
                                 </div>
                             </div>
@@ -134,6 +196,13 @@ const CreUpLocation = ({ type }) => {
                                         type="text"
                                         id="address"
                                         placeholder="Nhập địa chỉ cụ thể"
+                                        value={locationInfo?.address || ''}
+                                        onChange={(e) =>
+                                            setLocationInfo({
+                                                ...locationInfo,
+                                                address: e.target.value
+                                            })
+                                        }
                                     />
                                 </div>
                             </div>
@@ -148,6 +217,13 @@ const CreUpLocation = ({ type }) => {
                                     id="description"
                                     cols="10"
                                     placeholder="Nhập mô tả"
+                                    value={locationInfo?.description || ''}
+                                    onChange={(e) =>
+                                        setLocationInfo({
+                                            ...locationInfo,
+                                            description: e.target.value
+                                        })
+                                    }
                                 />
                             </div>
                         </div>
@@ -157,11 +233,7 @@ const CreUpLocation = ({ type }) => {
                 {activeTab === 'image' && (
                     <div className="cre-up-location-modal__image-content row">
                         {images.map((image, index) => (
-                            <div
-                                key={index}
-                                className="col-4 location-modal__image-container"
-                                onClick={() => handleImageClick(index)}
-                            >
+                            <div key={index} className="col-4 location-modal__vid-img-container">
                                 <img
                                     src={image.preview}
                                     alt={`Upload ${index + 1}`}
@@ -171,12 +243,17 @@ const CreUpLocation = ({ type }) => {
                                     <button className="uploaded-image-option__btn">
                                         Đặt làm ảnh đại diện
                                     </button>
-                                    <button className="uploaded-image-option__btn">Xóa ảnh</button>
+                                    <button
+                                        className="uploaded-image-option__btn delete-btn"
+                                        onClick={() => handleDeleteImage(index)}
+                                    >
+                                        Xóa ảnh
+                                    </button>
                                 </div>
                             </div>
                         ))}
                         <div
-                            className="col-4 location-modal__image-upload-box"
+                            className="col-4 location-modal__upload-box"
                             onClick={() => fileInputRef.current.click()}
                         >
                             <FontAwesomeIcon
@@ -195,7 +272,44 @@ const CreUpLocation = ({ type }) => {
                     </div>
                 )}
                 {/* Video */}
-                {activeTab === 'video' && <div>Video</div>}
+                {activeTab === 'video' && (
+                    <div className="row">
+                        {videos.map((video, index) => (
+                            <div key={index} className="col-4 location-modal__vid-img-container">
+                                <video
+                                    src={video.preview}
+                                    className="location-modal__uploaded-video"
+                                    controls
+                                />
+                                <div className="location-modal__uploaded-video-options">
+                                    <button
+                                        className="uploaded-video-option__btn delete-btn"
+                                        onClick={() => handleDeleteVideo(index)}
+                                    >
+                                        Xóa video
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                        <div
+                            className="col-4 location-modal__upload-box"
+                            onClick={() => videoInputRef.current.click()}
+                        >
+                            <FontAwesomeIcon
+                                icon={faCirclePlus}
+                                className="location-modal__upload-icon"
+                            />
+                            <input
+                                type="file"
+                                ref={videoInputRef}
+                                onChange={handleVideoUpload}
+                                accept="video/*, .mkv"
+                                multiple
+                                hidden
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
             {/* Footer */}
             <div className="cre-up-location-modal__footer">
@@ -209,12 +323,14 @@ const CreUpLocation = ({ type }) => {
                 </div>
 
                 <div className="cre-up-location-modal__btns">
-                    <button className="page__header-button">Hủy</button>
+                    <button className="page__header-button" onClick={onClose}>
+                        Hủy
+                    </button>
                     <button className="primary-button delete-btn shadow-none">Xóa</button>
                     <button
                         className={`primary-button ${type === 'create' ? 'create-btn' : ''} shadow-none`}
                     >
-                        {type === 'create' ? 'Tạo mới' : 'Cập nhật'}
+                        {type === 'create' ? 'Thêm' : 'Cập nhật'}
                     </button>
                 </div>
             </div>

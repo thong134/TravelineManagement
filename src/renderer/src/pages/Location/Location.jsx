@@ -10,7 +10,8 @@ const Location = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const [creUpLocationModal, setCreUpLocationModal] = useState({
         isOpen: false,
-        type: 'create'
+        type: 'create',
+        location: null
     })
     const itemsPerPage = 8
 
@@ -89,7 +90,18 @@ const Location = () => {
                                 <td>{item.favorite}</td>
                                 <td>{item.lastUpdate}</td>
                                 <td className="p-0">
-                                    <button className="primary-button detail-btn">Cập nhật</button>
+                                    <button
+                                        className="primary-button detail-btn"
+                                        onClick={() =>
+                                            setCreUpLocationModal({
+                                                isOpen: true,
+                                                type: 'update',
+                                                location: item
+                                            })
+                                        }
+                                    >
+                                        Cập nhật
+                                    </button>
                                 </td>
                             </tr>
                         ))}
@@ -107,7 +119,13 @@ const Location = () => {
                 showHeader={false}
                 width="660px"
             >
-                <CreUpLocation type={creUpLocationModal.type} />
+                <CreUpLocation
+                    type={creUpLocationModal.type}
+                    location={creUpLocationModal.location}
+                    onClose={() =>
+                        setCreUpLocationModal({ isOpen: false, type: 'create', location: null })
+                    }
+                />
             </Modal>
         </div>
     )
