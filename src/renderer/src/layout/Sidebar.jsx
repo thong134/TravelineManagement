@@ -81,7 +81,7 @@ function Sidebar() {
                     <FontAwesomeIcon className="sidebar__menu-item-icon" icon={faCar} />
                     Thuê xe
                 </Link>
-                <Link
+                {/* <Link
                     to="/dashboard/hotel"
                     className={`sidebar__menu-item ${
                         location.pathname === '/dashboard/hotel' ? 'sidebar__menu-item--active' : ''
@@ -122,7 +122,7 @@ function Sidebar() {
                 >
                     <FontAwesomeIcon className="sidebar__menu-item-icon" icon={faHandshake} />
                     Đối tác
-                </Link>
+                </Link> */}
                 <Link
                     to="/dashboard/report"
                     className={`sidebar__menu-item ${

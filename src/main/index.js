@@ -16,16 +16,19 @@ function createWindow() {
             preload: join(__dirname, '../preload/index.js'),
             sandbox: false,
             contextIsolation: false,
-            webSecurity: false,
-            contentSecurityPolicy: {
-                directives: {
-                    defaultSrc: ["'self'"],
-                    imgSrc: ["'self'", 'data:', 'blob:'],
-                    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-                    fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-                    scriptSrc: ["'self'", "'unsafe-inline'"]
-                }
-            }
+            webSecurity: true,
+            // contentSecurityPolicy: {
+            //     directives: {
+            //         defaultSrc: ["'self'"],
+            //         imgSrc: ["'self'", 'data:', 'blob:'],
+            //         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+            //         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+            //         scriptSrc: ["'self'", "'unsafe-inline'"]
+            //     }
+            // },
+            // additionalArguments:[
+            //     "--disable-site-isolation-trials"
+            //   ] 
         }
     })
 
@@ -38,6 +41,20 @@ function createWindow() {
         return { action: 'deny' }
     })
 
+    mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+          responseHeaders: {
+            ...details.responseHeaders,
+            'Content-Security-Policy': [
+              "default-src 'self' 'unsafe-inline' 'unsafe-eval';",
+              "img-src 'self' data: blob: https://firebasestorage.googleapis.com;",
+              "media-src 'self' https://firebasestorage.googleapis.com;",
+              "connect-src 'self' https://firebasestorage.googleapis.com https://*.firebaseio.com https://*.googleapis.com;"
+            ].join(' ')
+          }
+        });
+      });
+      
     // HMR for renderer base on electron-vite cli.
     // Load the remote URL for development or the local html file for production.
     if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

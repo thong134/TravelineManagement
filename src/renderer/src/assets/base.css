@@ -297,6 +297,18 @@ textarea[disabled] {
     flex: 0 0 calc(58.33% - 7.5px);
 }
 
+.cre-up-location-modal__description-container {
+    display: flex; 
+    gap: 16px; 
+}
+
+.cre-up-location-modal__description-eng {
+    flex: 1; /* Các cột chiếm đều không gian */
+    display: flex;
+    flex-direction: column;
+}
+
 .shadow-none {
     box-shadow: none !important;
+    
 }

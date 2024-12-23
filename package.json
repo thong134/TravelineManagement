@@ -20,12 +20,16 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
+    "@firebase/auth": "^1.8.1",
+    "@firebase/firestore": "^4.7.5",
+    "@firebase/storage": "^0.13.4",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
     "@fortawesome/free-regular-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "electron-updater": "^6.1.7",
+    "firebase": "^11.0.2",
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {

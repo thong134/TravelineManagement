@@ -141,3 +141,28 @@
 .uploaded-video-option__btn.delete-btn:hover {
     background-color: rgba(220, 53, 69, 0.9);
 }
+
+/* Page Header button */
+
+.page__header-button {
+    /* ... existing styles ... */
+    transition: all 0.3s ease;
+}
+
+.page__header-button.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.page__header-button.active .page__header-icon {
+    color: white;
+}
+
+/*icon*/
+.thumbnail-indicator {
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+}
+
+.location-modal__vid-img-container {
+    position: relative;
+}

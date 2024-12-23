@@ -1,10 +1,47 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import testImage from '../../assets/images/vung_tau.jpg'
 import Modal from '../../components/Modal'
 import Disapproval from './Disapproval'
+import { doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'
+import { db } from '../../firebaseConfig'
 
-function VehicleRentalDetail({ data, onClose }) {
+function VehicleRentalDetail({ vehicleId, onClose }) {
+    const [vehicleData, setVehicleData] = useState(null)
     const [isOpenDisapproval, setIsOpenDisapproval] = useState(false)
+
+    useEffect(() => {
+        const fetchVehicleDetail = async () => {
+            try {
+                // Lấy thông tin từ RENTAL_VEHICLE
+                const vehicleDoc = await getDoc(doc(db, 'RENTAL_VEHICLE', vehicleId))
+                const vehicleInfo = vehicleDoc.data()
+
+                // Lấy thông tin từ VEHICLE_INFORMATION
+                const vehicleInfoQuery = query(
+                    collection(db, 'VEHICLE_INFORMATION'),
+                    where('vehicleId', '==', vehicleInfo.vehicleId)
+                )
+                const vehicleInfoSnapshot = await getDocs(vehicleInfoQuery)
+                const vehicleInfoData = vehicleInfoSnapshot.docs[0]?.data()
+
+                setVehicleData({
+                    ...vehicleInfo,
+                    ...vehicleInfoData,
+                    hourlyRentalPrice: vehicleInfo.hourPrice,
+                    dailyRentalPrice: vehicleInfo.dayPrice,
+                    vehicleRegistrationFront: vehicleInfo.vehicleRegistationFront,
+                    vehicleRegistrationBack: vehicleInfo.vehicleRegistationBack,
+                    requirement: vehicleInfo.requirements
+                })
+            } catch (error) {
+                console.error('Lỗi khi lấy dữ liệu xe:', error)
+            }
+        }
+
+        if (vehicleId) {
+            fetchVehicleDetail()
+        }
+    }, [vehicleId])
 
     const onDisapproval = (reason) => {
         console.log(reason)
@@ -22,8 +59,7 @@ function VehicleRentalDetail({ data, onClose }) {
                             className="w-100"
                             type="text"
                             id="licensePlate"
-                            placeholder="Nhập biển số xe"
-                            value={data?.licensePlate || ''}
+                            value={vehicleData?.licensePlate || ''}
                             disabled
                         />
                     </div>
@@ -37,8 +73,7 @@ function VehicleRentalDetail({ data, onClose }) {
                             className="w-100"
                             type="text"
                             id="registrationNumber"
-                            placeholder="Nhập số đăng ký xe"
-                            value={data?.registrationNumber || ''}
+                            value={vehicleData?.registrationNumber || ''}
                             disabled
                         />
                     </div>
@@ -52,8 +87,7 @@ function VehicleRentalDetail({ data, onClose }) {
                             className="w-100"
                             type="text"
                             id="vehicleType"
-                            placeholder="Nhập loại xe"
-                            value={data?.vehicleType || ''}
+                            value={vehicleData?.vehicleType || ''}
                             disabled
                         />
                     </div>
@@ -67,8 +101,7 @@ function VehicleRentalDetail({ data, onClose }) {
                             className="w-100"
                             type="text"
                             id="brand"
-                            placeholder="Nhập hãng xe"
-                            value={data?.brand || ''}
+                            value={vehicleData?.brand || ''}
                             disabled
                         />
                     </div>
@@ -82,8 +115,7 @@ function VehicleRentalDetail({ data, onClose }) {
                             className="w-100"
                             type="text"
                             id="line"
-                            placeholder="Nhập dòng xe"
-                            value={data?.line || ''}
+                            value={vehicleData?.line || ''}
                             disabled
                         />
                     </div>
@@ -97,8 +129,7 @@ function VehicleRentalDetail({ data, onClose }) {
                             className="w-100"
                             type="text"
                             id="maxSeat"
-                            placeholder="Nhập số chỗ tối đa"
-                            value={data?.maxSeat || ''}
+                            value={vehicleData?.maxSeat || ''}
                             disabled
                         />
                     </div>
@@ -111,8 +142,7 @@ function VehicleRentalDetail({ data, onClose }) {
                         <textarea
                             className="w-100"
                             id="description"
-                            placeholder="Nhập mô tả"
-                            value={data?.description || ''}
+                            value={vehicleData?.description || ''}
                             rows={3}
                             disabled
                         />
@@ -123,7 +153,7 @@ function VehicleRentalDetail({ data, onClose }) {
                     <div className="modal__vid-img-container">
                         <img
                             className="modal__uploaded-image"
-                            src={testImage}
+                            src={vehicleData?.vehicleRegistrationFront}
                             alt="Giấy đăng ký xe (Mặt trước)"
                         />
                     </div>
@@ -147,8 +177,7 @@ function VehicleRentalDetail({ data, onClose }) {
                             <input
                                 className="w-100"
                                 id="dailyRentalPrice"
-                                placeholder="Nhập giá thuê theo ngày"
-                                value={data?.dailyRentalPrice || ''}
+                                value={vehicleData?.dailyRentalPrice || ''}
                                 disabled
                             />
                         </div>
@@ -161,8 +190,7 @@ function VehicleRentalDetail({ data, onClose }) {
                             <input
                                 className="w-100"
                                 id="hourlyRentalPrice"
-                                placeholder="Nhập giá thuê theo giờ"
-                                value={data?.hourlyRentalPrice || ''}
+                                value={vehicleData?.hourlyRentalPrice || ''}
                                 disabled
                             />
                         </div>
@@ -176,8 +204,7 @@ function VehicleRentalDetail({ data, onClose }) {
                         <textarea
                             className="w-100"
                             id="requirement"
-                            placeholder="Nhập yêu cầu"
-                            value={data?.requirement || ''}
+                            value={vehicleData?.requirement || ''}
                             rows={6}
                             disabled
                         />

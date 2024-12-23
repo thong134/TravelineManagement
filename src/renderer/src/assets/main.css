@@ -285,3 +285,29 @@
     border-radius: 10px;
     overflow: hidden;
 }
+
+/* Combo Box */
+
+.combo-box{ 
+    padding: 11px 10px;
+    border-radius: 8px;
+    font-size: 1.4rem;
+    border: 1px solid #b9bdc7;
+    width: 100%;
+}
+
+.combo-box:focus{
+    border: 1px solid #000;
+}
+
+.combo-box.placeholder option[value=""] {
+    color: gray;
+}
+
+.combo-box:invalid {
+    color: gray; 
+}
+
+.combo-box:not(:invalid) {
+    color: black;
+}

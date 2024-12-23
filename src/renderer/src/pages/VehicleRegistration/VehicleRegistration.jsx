@@ -1,75 +1,131 @@
-import { useState, useMemo, useCallback } from 'react'
-import Pagination from '../../components/Pagination'
-import Modal from '../../components/Modal'
-import VehicleRentalDetail from '../../components/VehicleRegistration/VehicleRentalDetail'
-import RegistrationDetail from '../../components/VehicleRegistration/RegistrationDetail'
-import './VehicleRegistration.css'
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import Pagination from '../../components/Pagination';
+import Modal from '../../components/Modal';
+import VehicleRentalDetail from '../../components/VehicleRegistration/VehicleRentalDetail';
+import RegistrationDetail from '../../components/VehicleRegistration/RegistrationDetail';
+import './VehicleRegistration.css';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
 
 const VehicleRegistration = () => {
-    const [currentPage, setCurrentPage] = useState(1)
-    const [activeTab, setActiveTab] = useState('vehicle')
+    const [currentPage, setCurrentPage] = useState(1);
+    const [activeTab, setActiveTab] = useState('vehicle');
     const [vehicleRentalDetail, setVehicleRentalDetail] = useState({
         show: false,
-        data: null
-    })
+        vehicleId: null,
+    });
     const [registrationDetail, setRegistrationDetail] = useState({
         show: false,
-        data: null
-    })
-    const itemsPerPage = 8
+        contractId: null,
+    });
+    const [vehicleData, setVehicleData] = useState([]);
+    const [registerData, setRegisterData] = useState([]);
+    const [filterStatus, setFilterStatus] = useState('all');
 
-    const mockData = [...Array(20)].map((_, index) => {
-        if (activeTab === 'vehicle') {
-            return {
-                id: index + 1,
-                code: `X${index + 1}`,
-                licensePlate: `1234567890${index}`,
-                line: `Dòng xe ${index + 1}`,
-                brand: `Hãng xe ${index + 1}`,
-                owner: `Chủ xe ${index + 1}`,
-                requestDate: new Date().toLocaleDateString(),
-                status:
-                    index % 3 === 0
-                        ? 'Đang chờ duyệt'
-                        : index % 3 === 1
-                          ? 'Đã được duyệt'
-                          : 'Không được duyệt'
-            }
-        } else {
-            return {
-                id: index + 1,
-                code: `X${index + 1}`,
-                name: `Tên kinh doanh ${index + 1}`,
-                type: `Loại hình ${index + 1}`,
-                province: `Tỉnh đăng ký ${index + 1}`,
-                owner: `Chủ đơn đăng ký ${index + 1}`,
-                expirationDate: index + 1,
-                requestDate: new Date().toLocaleDateString(),
-                status:
-                    index % 3 === 0
-                        ? 'Đang chờ duyệt'
-                        : index % 3 === 1
-                          ? 'Đã được duyệt'
-                          : 'Không được duyệt'
-            }
+    const itemsPerPage = 8;
+
+    // Fetch vehicle data
+    const fetchVehicleData = async () => {
+        const vehicleData = [];
+        const vehicleQuery = query(collection(db, 'RENTAL_VEHICLE'));
+        const vehicleSnapshot = await getDocs(vehicleQuery);
+
+        for (const doc of vehicleSnapshot.docs) {
+            const vehicle = doc.data();
+            const vehicleInfoQuery = query(
+                collection(db, 'VEHICLE_INFORMATION'),
+                where('vehicleId', '==', vehicle.vehicleId)
+            );
+            const vehicleInfoSnapshot = await getDocs(vehicleInfoQuery);
+            const vehicleInfo = vehicleInfoSnapshot.docs[0]?.data();
+
+            const contractQuery = query(
+                collection(db, 'CONTRACT'),
+                where('contractId', '==', vehicle.contractId)
+            );
+            const contractSnapshot = await getDocs(contractQuery);
+            const contract = contractSnapshot.docs[0]?.data();
+
+            const userQuery = query(
+                collection(db, 'USER'),
+                where('userId', '==', contract?.userId)
+            );
+            const userSnapshot = await getDocs(userQuery);
+            const user = userSnapshot.docs[0]?.data();
+
+            vehicleData.push({
+                licensePlate: vehicle.licensePlate,
+                type: vehicleInfo?.type,
+                model: vehicleInfo?.model,
+                brand: vehicleInfo?.brand,
+                owner: user?.fullName,
+                requestDate: vehicle.createdDate,
+                status: vehicle.status,
+                contractApproved: contract?.status === 'approved',
+            });
         }
-    })
 
-    const totalPages = Math.ceil(mockData.length / itemsPerPage)
+        setVehicleData(vehicleData);
+    };
+
+    // Fetch registration data
+    const fetchRegisterData = async () => {
+        const registerData = [];
+        const contractQuery = query(collection(db, 'CONTRACT'));
+        const contractSnapshot = await getDocs(contractQuery);
+
+        for (const doc of contractSnapshot.docs) {
+            const contract = doc.data();
+
+            const userQuery = query(
+                collection(db, 'USER'),
+                where('userId', '==', contract.userId)
+            );
+            const userSnapshot = await getDocs(userQuery);
+            const user = userSnapshot.docs[0]?.data();
+
+            registerData.push({
+                contractId: contract.contractId,
+                businessType: contract.businessType,
+                businessProvince: contract.businessProvince,
+                owner: user?.fullName,
+                contractTerm: contract.contractTerm,
+                requestDate: contract.createdDate,
+                status: contract.status,
+            });
+        }
+
+        setRegisterData(registerData);
+    };
+
+    useEffect(() => {
+        if (activeTab === 'vehicle') {
+            fetchVehicleData();
+        } else {
+            fetchRegisterData();
+        }
+    }, [activeTab]);
+
+    const filteredData = activeTab === 'vehicle'
+        ? vehicleData.filter(item => filterStatus === 'all' || item.status === filterStatus)
+        : registerData.filter(item => filterStatus === 'all' || item.status === filterStatus);
+
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
     const currentData = useMemo(() => {
-        const start = (currentPage - 1) * itemsPerPage
-        return mockData.slice(start, start + itemsPerPage)
-    }, [currentPage, mockData])
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredData.slice(start, start + itemsPerPage);
+    }, [currentPage, filteredData]);
 
     const handlePageChange = useCallback(
         (page) => {
             if (page >= 1 && page <= totalPages) {
-                setCurrentPage(page)
+                setCurrentPage(page);
             }
         },
         [totalPages]
-    )
+    );
+
     return (
         <div className="page">
             <div className="page__header">
@@ -88,11 +144,9 @@ const VehicleRegistration = () => {
                     </button>
                 </div>
                 <div className="page__filters">
-                    <button className="primary-button completed shadow-none">Đã được duyệt</button>
-                    <button className="primary-button processing shadow-none">
-                        Đang chờ duyệt
-                    </button>
-                    <button className="primary-button reject shadow-none">Không được duyệt</button>
+                    <button className="primary-button completed shadow-none" onClick={() => setFilterStatus('Đã được duyệt')}>Đã được duyệt</button>
+                    <button className="primary-button processing shadow-none" onClick={() => setFilterStatus('Đang chờ duyệt')}>Đang chờ duyệt</button>
+                    <button className="primary-button reject shadow-none" onClick={() => setFilterStatus('Không được duyệt')}>Không được duyệt</button>
                 </div>
             </div>
             <div className="page__content">
@@ -101,8 +155,8 @@ const VehicleRegistration = () => {
                         <tr>
                             {activeTab === 'vehicle' ? (
                                 <>
-                                    <th>Mã xe cho thuê</th>
                                     <th>Biển số xe</th>
+                                    <th>Loại xe</th>
                                     <th>Dòng xe</th>
                                     <th>Hãng xe</th>
                                     <th>Chủ xe cho thuê</th>
@@ -113,7 +167,6 @@ const VehicleRegistration = () => {
                             ) : (
                                 <>
                                     <th>Mã đơn</th>
-                                    <th>Tên kinh doanh</th>
                                     <th>Loại hình</th>
                                     <th>Tỉnh đăng ký</th>
                                     <th>Chủ đơn đăng ký</th>
@@ -126,84 +179,72 @@ const VehicleRegistration = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {currentData.map((item, index) => {
-                            if (activeTab === 'vehicle') {
-                                return (
-                                    <tr key={item.id}>
-                                        <td>{item.code}</td>
-                                        <td>{item.licensePlate}</td>
-                                        <td>{item.line}</td>
-                                        <td>{item.brand}</td>
-                                        <td>{item.owner}</td>
-                                        <td>{item.requestDate}</td>
-                                        <td>
-                                            <div
-                                                className={`table__status ${
-                                                    item.status === 'Đang chờ duyệt'
-                                                        ? 'processing'
-                                                        : item.status === 'Đã được duyệt'
-                                                          ? 'completed'
-                                                          : 'reject'
-                                                }`}
-                                            >
-                                                {item.status}
-                                            </div>
-                                        </td>
-                                        <td className="p-0">
-                                            <button
-                                                className="primary-button detail-btn"
-                                                onClick={() =>
-                                                    setVehicleRentalDetail({
-                                                        show: true,
-                                                        data: item
-                                                    })
-                                                }
-                                            >
-                                                Chi tiết
-                                            </button>
-                                        </td>
-                                    </tr>
-                                )
-                            } else {
-                                return (
-                                    <tr key={item.id}>
-                                        <td>{item.code}</td>
-                                        <td>{item.name}</td>
-                                        <td>{item.type}</td>
-                                        <td>{item.province}</td>
-                                        <td>{item.owner}</td>
-                                        <td>{item.expirationDate} năm</td>
-                                        <td>{item.requestDate}</td>
-                                        <td>
-                                            <div
-                                                className={`table__status ${
-                                                    item.status === 'Đang chờ duyệt'
-                                                        ? 'processing'
-                                                        : item.status === 'Đã được duyệt'
-                                                          ? 'completed'
-                                                          : 'reject'
-                                                }`}
-                                            >
-                                                {item.status}
-                                            </div>
-                                        </td>
-                                        <td className="p-0">
-                                            <button
-                                                className="primary-button detail-btn"
-                                                onClick={() =>
-                                                    setRegistrationDetail({
-                                                        show: true,
-                                                        data: item
-                                                    })
-                                                }
-                                            >
-                                                Chi tiết
-                                            </button>
-                                        </td>
-                                    </tr>
-                                )
-                            }
-                        })}
+                        {currentData.map((item) => (
+                            activeTab === 'vehicle' ? (
+                                <tr key={item.licensePlate}>
+                                    <td>{item.licensePlate}</td>
+                                    <td>{item.type}</td>
+                                    <td>{item.model}</td>
+                                    <td>{item.brand}</td>
+                                    <td>{item.owner}</td>
+                                    <td>{item.requestDate}</td>
+                                    <td>
+                                        <div className={`table__status ${
+                                            item.status === 'Đang chờ duyệt'
+                                                ? 'processing'
+                                                : item.status === 'Đã được duyệt'
+                                                    ? 'completed'
+                                                    : 'reject'
+                                        }`}>
+                                            {item.status}
+                                        </div>
+                                    </td>
+                                    <td className="p-0">
+                                        <button
+                                            className="primary-button detail-btn ml-2 mr-2"
+                                            onClick={() => setVehicleRentalDetail({
+                                                show: true,
+                                                vehicleId: item.licensePlate,
+                                            })}
+                                            disabled={!item.contractApproved}
+                                        >
+                                            Chi tiết
+                                        </button>
+                                    </td>
+                                </tr>
+                            ) : (
+                                <tr key={item.contractId}>
+                                    <td>{item.contractId}</td>
+                                    <td>{item.businessType}</td>
+                                    <td>{item.businessProvince}</td>
+                                    <td>{item.owner}</td>
+                                    <td>{item.contractTerm} năm</td>
+                                    <td>{item.requestDate}</td>
+                                    <td>
+                                        <div className={`table__status ${
+                                            item.status === 'Đang chờ duyệt'
+                                                ? 'processing'
+                                                : item.status === 'Đã được duyệt'
+                                                    ? 'completed'
+                                                    : 'reject'
+                                        }`}>
+                                            {item.status}
+                                        </div>
+                                    </td>
+                                    <td className="p-0">
+                                        <button
+                                            className="primary-button detail-btn"
+                                            onClick={() => setRegistrationDetail({
+                                                show: true,
+                                                contractId: item.contractId,
+                                            })}
+                                        >
+                                            Chi tiết
+                                        </button>
+                                    </td>
+                                </tr>
+                            )
+                        ))}
                     </tbody>
                 </table>
             </div>
@@ -215,27 +256,28 @@ const VehicleRegistration = () => {
             {/* Vehicle Rental Details */}
             <Modal
                 isOpen={vehicleRentalDetail.show}
-                onClose={() => setVehicleRentalDetail({ show: false, data: null })}
+                onClose={() => setVehicleRentalDetail({ show: false, vehicleId: null })}
                 showHeader={false}
             >
                 <VehicleRentalDetail
-                    data={vehicleRentalDetail.data}
-                    onClose={() => setVehicleRentalDetail({ show: false, data: null })}
+                    vehicleId={vehicleRentalDetail.vehicleId}
+                    onClose={() => setVehicleRentalDetail({ show: false, vehicleId: null })}
                 />
             </Modal>
             {/* Registration Details */}
             <Modal
                 isOpen={registrationDetail.show}
-                onClose={() => setRegistrationDetail({ show: false, data: null })}
+                onClose={() => setRegistrationDetail({ show: false, contractId: null })}
                 showHeader={false}
+                width="700px"
             >
                 <RegistrationDetail
-                    data={registrationDetail.data}
-                    onClose={() => setRegistrationDetail({ show: false, data: null })}
+                    contractId={registrationDetail.contractId}
+                    onClose={() => setRegistrationDetail({ show: false, contractId: null })}
                 />
             </Modal>
         </div>
-    )
-}
+    );
+};
 
-export default VehicleRegistration
+export default VehicleRegistration;

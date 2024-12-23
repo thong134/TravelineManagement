@@ -1,53 +1,52 @@
 import { useState, useRef, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCirclePlus, faStar } from '@fortawesome/free-solid-svg-icons'
+import { faCirclePlus, faStar  } from '@fortawesome/free-solid-svg-icons'
 import { db, storage } from '../../firebaseConfig'
-import { query, collection, orderBy, limit, getDocs, addDoc, updateDoc, doc, setDoc } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 
-const CreUpLocation = ({ type, destination = null, onClose }) => {
+const UpdateLocation = ({ location, onClose }) => {
     const [activeTab, setActiveTab] = useState('info')
-    const [destinationInfo, setDestinationInfo] = useState(destination || {})
-    const [provinces, setProvinces] = useState([]); 
-    const [districts, setDistricts] = useState([]);
-    const [photos, setImages] = useState([])
-    const [videos, setVideos] = useState([])
+    const [destinationInfo, setDestinationInfo] = useState(location || {})
+    const [provinces, setProvinces] = useState([])
+    const [districts, setDistricts] = useState([])
+    const [photos, setImages] = useState(
+        location?.photo?.map(url => ({
+            file: null,
+            preview: url,
+            isExisting: true
+        })) || []
+    )
+    const [videos, setVideos] = useState(
+        location?.video?.map(url => ({
+            file: null,
+            preview: url,
+            isExisting: true
+        })) || []
+    )
     const videoInputRef = useRef(null)
     const fileInputRef = useRef(null)
 
     const uploadFilesToStorage = async (files, folder) => {
         const urls = [];
         for (const file of files) {
-            const storageRef = ref(storage, `${folder}/${file.name}`);
-            const snapshot = await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(snapshot.ref);
-            urls.push(url);
+            if (file.isExisting) {
+                urls.push(file.preview);
+            } else {
+                const storageRef = ref(storage, `${folder}/${file.file.name}`);
+                const snapshot = await uploadBytes(storageRef, file.file);
+                const url = await getDownloadURL(snapshot.ref);
+                urls.push(url);
+            }
         }
         return urls;
     };
-    
+
     const handleSubmit = async () => {
         try {
-            
-            let newId = "D00001";
+            const photoUrls = await uploadFilesToStorage(photos, 'photos');
+            const videoUrls = await uploadFilesToStorage(videos, 'videos');
 
-            const q = query(collection(db, `DESTINATION`), orderBy('destinationId', 'desc'), limit(1));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                const lastDoc = querySnapshot.docs[0];
-                const lastId = lastDoc.data().destinationId; 
-                const numericPart = parseInt(lastId.substring(1), 10); 
-                newId = `D${(numericPart + 1).toString().padStart(5, '0')}`; 
-            }
-            else {
-                console.log('Lỗi truy vấn');
-            }
-
-            const photoUrls = await uploadFilesToStorage(photos.map((photo) => photo.file), 'photos');
-            const videoUrls = await uploadFilesToStorage(videos.map((video) => video.file), 'videos');
-    
             const data = {
-                destinationId: newId,
                 destinationName: destinationInfo.destinationName,
                 latitude: destinationInfo.latitude,
                 longitude: destinationInfo.longitude,
@@ -58,76 +57,58 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                 descriptionViet: destinationInfo.descriptionViet,
                 photo: photoUrls,
                 video: videoUrls,
-                createdDate: new Date(),
+                lastUpdate: new Date(),
             };
-    
-            if (type === 'create') {
-                console.log('Dữ liệu đang lưu:', data);
-                await setDoc(doc(db, `DESTINATION/${newId}`), data);
-                alert('Thêm địa điểm thành công!');
-                console.log('Tài liệu đã lưu thành công!');
-                
-            } else {
-                const destinationRef = doc(db, `DESTINATION`);
-                await updateDoc(destinationRef, {
-                    ...data,
-                    lastUpdatedDate: new Date(),
-                });
-                alert('Cập nhật địa điểm thành công!');
-            }
+
+            const destinationRef = doc(db, `DESTINATION/${location.id}`);
+            await updateDoc(destinationRef, data);
+            alert('Cập nhật địa điểm thành công!');
+            onClose();
         } catch (error) {
-            console.error('Lỗi khi thêm/cập nhật địa điểm:', error);
+            console.error('Lỗi khi cập nhật địa điểm:', error);
             alert('Đã xảy ra lỗi, vui lòng thử lại!');
         }
     };
 
-    useEffect(() => {
-        return () => {
-            photos.forEach((image) => {
-                URL.revokeObjectURL(image.preview)
-            })
-            videos.forEach((video) => URL.revokeObjectURL(video.preview))
+    const handleDelete = async () => {
+        try {
+            const destinationRef = doc(db, `DESTINATION/${location.id}`);
+            await updateDoc(destinationRef, {
+                status: "Ngưng Hoạt Động",
+                lastUpdate: new Date()
+            });
+            alert('Xóa địa điểm thành công!');
+            onClose();
+        } catch (error) {
+            console.error('Lỗi khi xóa địa điểm:', error);
+            alert('Đã xảy ra lỗi, vui lòng thử lại!');
         }
-    }, [])
+    };
 
+    // Các hàm xử lý ảnh và video tương tự như CreUpLocation
     const handleImageUpload = (e) => {
         const files = Array.from(e.target.files)
         const newImages = files.map((file) => ({
             file,
-            preview: URL.createObjectURL(file)
+            preview: URL.createObjectURL(file),
+            isExisting: false
         }))
         setImages((prev) => [...prev, ...newImages])
         e.target.value = ''
-    }
-
-    const handleDeleteImage = (index) => {
-        setImages((prev) => {
-            const newImages = [...prev]
-            URL.revokeObjectURL(newImages[index].preview)
-            newImages.splice(index, 1)
-            return newImages
-        })
     }
 
     const handleVideoUpload = (e) => {
         const files = Array.from(e.target.files)
         const newVideos = files.map((file) => ({
             file,
-            preview: URL.createObjectURL(file)
+            preview: URL.createObjectURL(file),
+            isExisting: false
         }))
         setVideos((prev) => [...prev, ...newVideos])
         e.target.value = ''
     }
 
-    const handleDeleteVideo = (index) => {
-        setVideos((prev) => {
-            const newVideos = [...prev]
-            URL.revokeObjectURL(newVideos[index].preview)
-            newVideos.splice(index, 1)
-            return newVideos
-        })
-    }
-
+    // Các useEffect và JSX tương tự như CreUpLocation
     useEffect(() => {
         const fetchProvinces = async () => {
             const provincesCollection = collection(db, 'PROVINCE');
@@ -142,7 +123,6 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
     useEffect(() => {
         if (destinationInfo.province) {
             const selectedProvince = provinces.find(p => p.provinceName === destinationInfo.province);
-            //setDistricts(selectedProvince ? [selectedProvince.city, ...selectedProvince.district] : []);
             if (selectedProvince && selectedProvince.city) {
                 setDistricts([selectedProvince.city, ...selectedProvince.district]);
             } else {
@@ -150,21 +130,6 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
             }
         }
     }, [destinationInfo.province, provinces]);
-
-    const handleDelete = async () => {
-        try {
-            const destinationRef = doc(db, `DESTINATION/${destination.id}`);
-            await updateDoc(destinationRef, {
-                status: "Ngưng Hoạt Động",
-                lastUpdatedDate: new Date()
-            });
-            alert('Xóa địa điểm thành công!');
-            onClose();
-        } catch (error) {
-            console.error('Lỗi khi xóa địa điểm:', error);
-            alert('Đã xảy ra lỗi, vui lòng thử lại!');
-        }
-    };
 
     const handleSetThumbnail = (index) => {
         setImages(prevImages => {
@@ -177,7 +142,6 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
 
     return (
         <div className="cre-up-location-modal">
-            {/* Tabs */}
             <div className="cre-up-location-modal__tabs">
                 <button
                     className={`primary-button tab-btn ${activeTab === 'info' ? 'active' : ''}`}
@@ -198,9 +162,7 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                     Video
                 </button>
             </div>
-            {/* Content */}
             <div className="cre-up-location-modal__content">
-                {/* Info */}
                 {activeTab === 'info' && (
                     <>
                         <div className="row">
@@ -213,7 +175,6 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                                         className="w-100"
                                         type="text"
                                         id="destinationName"
-                                        placeholder="Nhập tên địa điểm"
                                         value={destinationInfo?.destinationName || ''}
                                         onChange={(e) =>
                                             setDestinationInfo({
@@ -235,14 +196,12 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                                         setDestinationInfo({
                                             ...destinationInfo,
                                             province: e.target.value,
-                                            district: "" 
+                                            district: ""
                                         })
                                     }
-                                    className={`combo-box ${!destinationInfo.province ? 'placeholder' : ''}`}
+                                    className="combo-box"
                                 >
-                                    <option value="" disabled hidden>
-                                        Chọn
-                                    </option>
+                                    <option value="" disabled>Chọn</option>
                                     {provinces.map((province, index) => (
                                         <option key={index} value={province.provinceName}>
                                             {province.provinceName}
@@ -263,12 +222,10 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                                             district: e.target.value
                                         })
                                     }
-                                    className={`combo-box ${!destinationInfo.district ? 'placeholder' : ''}`}
-                                    disabled={!destinationInfo.province} 
+                                    className="combo-box"
+                                    disabled={!destinationInfo.province}
                                 >
-                                    <option value="" disabled hidden>
-                                        Chọn
-                                    </option>
+                                    <option value="" disabled>Chọn</option>
                                     {districts.map((district, index) => (
                                         <option key={index} value={district}>
                                             {district}
@@ -285,7 +242,6 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                                         className="w-100"
                                         type="text"
                                         id="longitude"
-                                        placeholder="Nhập kinh độ"
                                         value={destinationInfo?.longitude || ''}
                                         onChange={(e) =>
                                             setDestinationInfo({
@@ -305,7 +261,6 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                                         className="w-100"
                                         type="text"
                                         id="latitude"
-                                        placeholder="Nhập vĩ độ"
                                         value={destinationInfo?.latitude || ''}
                                         onChange={(e) =>
                                             setDestinationInfo({
@@ -325,7 +280,6 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                                         className="w-100"
                                         type="text"
                                         id="specificAddress"
-                                        placeholder="Nhập địa chỉ cụ thể"
                                         value={destinationInfo?.specificAddress || ''}
                                         onChange={(e) =>
                                             setDestinationInfo({
@@ -342,12 +296,11 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                                 <label htmlFor="description" className="label-for-input">
                                     Mô tả (Tiếng Việt)
                                 </label>
-                                <div className="input-form flex-1 flex-column ">
+                                <div className="input-form flex-1 flex-column">
                                     <textarea
                                         className="w-100 flex-1"
                                         id="descriptionViet"
                                         rows="7"
-                                        placeholder="Nhập mô tả bằng tiếng Việt"
                                         value={destinationInfo?.descriptionViet || ''}
                                         onChange={(e) =>
                                             setDestinationInfo({
@@ -362,12 +315,11 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                                 <label htmlFor="other" className="label-for-input">
                                     Mô tả (Tiếng Anh)
                                 </label>
-                                <div className="input-form flex-1 flex-column ">
+                                <div className="input-form flex-1 flex-column">
                                     <textarea
                                         className="w-100 flex-1"
                                         id="descriptionEng"
                                         rows="7"
-                                        placeholder="Nhập mô tả bằng tiếng Anh"
                                         value={destinationInfo?.descriptionEng || ''}
                                         onChange={(e) =>
                                             setDestinationInfo({
@@ -381,7 +333,6 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                         </div>
                     </>
                 )}
-                {/* Image */}
                 {activeTab === 'image' && (
                     <div className="cre-up-location-modal__image-content row">
                         {photos.map((image, index) => (
@@ -444,7 +395,6 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                         </div>
                     </div>
                 )}
-                {/* Video */}
                 {activeTab === 'video' && (
                     <div className="row">
                         {videos.map((video, index) => (
@@ -484,39 +434,30 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                     </div>
                 )}
             </div>
-            {/* Footer */}
             <div className="cre-up-location-modal__footer">
                 <div className="cre-up-location-modal__last-update">
-                    {type === 'update' && (
-                        <>
-                            <p>Lần cập nhật cuối: 16/11/2024</p>
-                            <p>Bởi: NV1 - Trần Trung Thông</p>
-                        </>
-                    )}
+                    <p>Lần cập nhật cuối: {location?.lastUpdate}</p>
                 </div>
-
                 <div className="cre-up-location-modal__btns">
                     <button className="page__header-button" onClick={onClose}>
                         Hủy
                     </button>
-                    {type === 'update' && (
-                        <button 
-                            className="primary-button delete-btn shadow-none"
-                            onClick={handleDelete}
-                        >
-                            Xóa
-                        </button>
-                    )}
+                    <button 
+                        className="primary-button delete-btn shadow-none"
+                        onClick={handleDelete}
+                    >
+                        Xóa
+                    </button>
                     <button
-                        className={`primary-button ${type === 'create' ? 'create-btn' : ''} shadow-none`}
+                        className="primary-button shadow-none"
                         onClick={handleSubmit}
                     >
-                        Thêm
+                        Cập nhật
                     </button>
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
-export default CreUpLocation
+export default UpdateLocation
