@@ -12,7 +12,7 @@ const VehicleRegistration = () => {
     const [activeTab, setActiveTab] = useState('vehicle');
     const [vehicleRentalDetail, setVehicleRentalDetail] = useState({
         show: false,
-        vehicleId: null,
+        licensePlate: null,
     });
     const [registrationDetail, setRegistrationDetail] = useState({
         show: false,
@@ -91,7 +91,7 @@ const VehicleRegistration = () => {
                 owner: user?.fullName,
                 contractTerm: contract.contractTerm,
                 requestDate: contract.createdDate,
-                status: contract.status,
+                status: contract.contractStatus,
             });
         }
 
@@ -204,9 +204,9 @@ const VehicleRegistration = () => {
                                             className="primary-button detail-btn ml-2 mr-2"
                                             onClick={() => setVehicleRentalDetail({
                                                 show: true,
-                                                vehicleId: item.licensePlate,
+                                                licensePlate: item.licensePlate,
                                             })}
-                                            disabled={!item.contractApproved}
+                                            //disabled={!item.contractApproved}
                                         >
                                             Chi tiết
                                         </button>
@@ -222,9 +222,9 @@ const VehicleRegistration = () => {
                                     <td>{item.requestDate}</td>
                                     <td>
                                         <div className={`table__status ${
-                                            item.status === 'Đang chờ duyệt'
+                                            item.status === 'Chờ duyệt'
                                                 ? 'processing'
-                                                : item.status === 'Đã được duyệt'
+                                                : item.status === 'Đã duyệt'
                                                     ? 'completed'
                                                     : 'reject'
                                         }`}>
@@ -256,12 +256,13 @@ const VehicleRegistration = () => {
             {/* Vehicle Rental Details */}
             <Modal
                 isOpen={vehicleRentalDetail.show}
-                onClose={() => setVehicleRentalDetail({ show: false, vehicleId: null })}
+                onClose={() => setVehicleRentalDetail({ show: false, licensePlate: null })}
                 showHeader={false}
+                //width="700px"
             >
                 <VehicleRentalDetail
                     vehicleId={vehicleRentalDetail.vehicleId}
-                    onClose={() => setVehicleRentalDetail({ show: false, vehicleId: null })}
+                    onClose={() => setVehicleRentalDetail({ show: false, licensePlate: null })}
                 />
             </Modal>
             {/* Registration Details */}

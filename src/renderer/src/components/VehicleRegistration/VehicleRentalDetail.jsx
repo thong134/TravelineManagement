@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react'
 import testImage from '../../assets/images/vung_tau.jpg'
 import Modal from '../../components/Modal'
 import Disapproval from './Disapproval'
-import { doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'
+import { doc, getDoc, query, collection, where, getDocs, updateDoc } from 'firebase/firestore'
 import { db } from '../../firebaseConfig'
 
-function VehicleRentalDetail({ vehicleId, onClose }) {
+function VehicleRentalDetail({ licensePlate, onClose }) {
     const [vehicleData, setVehicleData] = useState(null)
     const [isOpenDisapproval, setIsOpenDisapproval] = useState(false)
 
@@ -13,7 +13,7 @@ function VehicleRentalDetail({ vehicleId, onClose }) {
         const fetchVehicleDetail = async () => {
             try {
                 // Lấy thông tin từ RENTAL_VEHICLE
-                const vehicleDoc = await getDoc(doc(db, 'RENTAL_VEHICLE', vehicleId))
+                const vehicleDoc = await getDoc(doc(db, 'RENTAL_VEHICLE', ))
                 const vehicleInfo = vehicleDoc.data()
 
                 // Lấy thông tin từ VEHICLE_INFORMATION
@@ -43,9 +43,31 @@ function VehicleRentalDetail({ vehicleId, onClose }) {
         }
     }, [vehicleId])
 
-    const onDisapproval = (reason) => {
-        console.log(reason)
-    }
+    const handleApprove = async () => {
+        try {
+            await updateDoc(doc(db, 'RENTAL_VEHICLE', vehicleId), {
+                contractStatus: 'Đã duyệt',
+                //approvedAt: new Date().toISOString()
+            });
+            onClose();
+        } catch (error) {
+            console.error('Lỗi khi duyệt xe:', error);
+        }
+    };
+
+    const onDisapproval = async (reason) => {
+        try {
+            await updateDoc(doc(db, 'RENTAL_VEHICLE', vehicleId), {
+                status: 'Không được duyệt',
+                disapprovalReason: reason,
+                disapprovedAt: new Date().toISOString()
+            });
+            setIsOpenDisapproval(false);
+            onClose();
+        } catch (error) {
+            console.error('Lỗi khi từ chối xe:', error);
+        }
+    };
 
     return (
         <div className="vehicle-registration-modal">
@@ -212,16 +234,33 @@ function VehicleRentalDetail({ vehicleId, onClose }) {
                 </div>
             </div>
             <div className="vehicle-registration-modal__btns">
-                <button className="page__header-button" onClick={onClose}>
-                    Hủy
-                </button>
-                <button
-                    className="primary-button delete-btn shadow-none"
-                    onClick={() => setIsOpenDisapproval(true)}
-                >
-                    Không duyệt
-                </button>
-                <button className={`primary-button shadow-none`}>Duyệt</button>
+                {vehicleData?.status === 'Đang chờ duyệt' ? (
+                    <>
+                        <button className="page__header-button" onClick={onClose}>
+                            Hủy
+                        </button>
+                        <button
+                            className="primary-button delete-btn shadow-none"
+                            onClick={() => setIsOpenDisapproval(true)}
+                        >
+                            Không duyệt
+                        </button>
+                        <button 
+                            className={`primary-button shadow-none`}
+                            onClick={handleApprove}
+                        >
+                            Duyệt
+                        </button>
+                    </>
+                ) : (
+                    <button 
+                        className="page__header-button" 
+                        onClick={onClose}
+                        style={{ margin: '0 auto' }}
+                    >
+                        Hủy
+                    </button>
+                )}
             </div>
             <Modal
                 isOpen={isOpenDisapproval}

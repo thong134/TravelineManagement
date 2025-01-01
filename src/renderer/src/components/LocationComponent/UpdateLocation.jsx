@@ -46,6 +46,16 @@ const UpdateLocation = ({ location, onClose }) => {
             const photoUrls = await uploadFilesToStorage(photos, 'photos');
             const videoUrls = await uploadFilesToStorage(videos, 'videos');
 
+            const currentDate = new Date();
+            const formattedDate = currentDate.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
             const data = {
                 destinationName: destinationInfo.destinationName,
                 latitude: destinationInfo.latitude,
@@ -57,7 +67,7 @@ const UpdateLocation = ({ location, onClose }) => {
                 descriptionViet: destinationInfo.descriptionViet,
                 photo: photoUrls,
                 video: videoUrls,
-                lastUpdate: new Date(),
+                lastUpdate: formattedDate
             };
 
             const destinationRef = doc(db, `DESTINATION/${location.id}`);
@@ -72,10 +82,20 @@ const UpdateLocation = ({ location, onClose }) => {
 
     const handleDelete = async () => {
         try {
+            const currentDate = new Date();
+            const formattedDate = currentDate.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
             const destinationRef = doc(db, `DESTINATION/${location.id}`);
             await updateDoc(destinationRef, {
                 status: "Ngưng Hoạt Động",
-                lastUpdate: new Date()
+                lastUpdate: formattedDate
             });
             alert('Xóa địa điểm thành công!');
             onClose();
@@ -436,7 +456,7 @@ const UpdateLocation = ({ location, onClose }) => {
             </div>
             <div className="cre-up-location-modal__footer">
                 <div className="cre-up-location-modal__last-update">
-                    <p>Lần cập nhật cuối: {location?.lastUpdate}</p>
+                    <p>Lần cập nhật cuối: {new Date(location?.lastUpdate).toLocaleDateString()}</p>
                 </div>
                 <div className="cre-up-location-modal__btns">
                     <button className="page__header-button" onClick={onClose}>

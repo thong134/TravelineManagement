@@ -39,7 +39,7 @@ function RegistrationDetail({ contractId, onClose }) {
                     businessProvince: contractInfo.businessProvince,
                     businessAddress: contractInfo.businessAddress,
                     taxCode: contractInfo.taxCode,
-                    status: contractInfo.status
+                    status: contractInfo.contractStatus
                 });
             } catch (error) {
                 console.error('Lỗi khi lấy dữ liệu hợp đồng:', error);
@@ -54,8 +54,8 @@ function RegistrationDetail({ contractId, onClose }) {
     const handleApprove = async () => {
         try {
             await updateDoc(doc(db, 'CONTRACT', contractId), {
-                status: 'Đã được duyệt',
-                approvedAt: new Date().toISOString()
+                contractStatus: 'Đã duyệt',
+                //approvedAt: new Date().toISOString()
             });
             onClose();
         } catch (error) {
@@ -66,7 +66,7 @@ function RegistrationDetail({ contractId, onClose }) {
     const onDisapproval = async (reason) => {
         try {
             await updateDoc(doc(db, 'CONTRACT', contractId), {
-                status: 'Không được duyệt',
+                contractStatus: 'Không được duyệt',
                 disapprovalReason: reason,
                 disapprovedAt: new Date().toISOString()
             });
@@ -284,21 +284,33 @@ function RegistrationDetail({ contractId, onClose }) {
                 </div>
             </div>
             <div className="vehicle-registration-modal__btns">
-                <button className="page__header-button" onClick={onClose}>
-                    Hủy
-                </button>
-                <button
-                    className="primary-button delete-btn shadow-none"
-                    onClick={() => setIsOpenDisapproval(true)}
-                >
-                    Không duyệt
-                </button>
-                <button 
-                    className={`primary-button shadow-none`}
-                    onClick={handleApprove}
-                >
-                    Duyệt
-                </button>
+                {contractData?.status === 'Chờ duyệt' ? (
+                    <>
+                        <button className="page__header-button" onClick={onClose}>
+                            Hủy
+                        </button>
+                        <button
+                            className="primary-button delete-btn shadow-none"
+                            onClick={() => setIsOpenDisapproval(true)}
+                        >
+                            Không duyệt
+                        </button>
+                        <button 
+                            className={`primary-button shadow-none`}
+                            onClick={handleApprove}
+                        >
+                            Duyệt
+                        </button>
+                    </>
+                ) : (
+                    <button 
+                        className="page__header-button" 
+                        onClick={onClose}
+                        style={{ margin: '0 auto' }}
+                    >
+                        Hủy
+                    </button>
+                )}
             </div>
             <Modal
                 isOpen={isOpenDisapproval}

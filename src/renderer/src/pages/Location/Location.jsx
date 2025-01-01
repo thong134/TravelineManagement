@@ -3,9 +3,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowUpWideShort, faFilter, faSearch } from '@fortawesome/free-solid-svg-icons'
 import Pagination from '../../components/Pagination'
 import Modal from '../../components/Modal'
-import CreUpLocation from '../../components/LocationComponent/CreUpLocation'
+import CreateLocation from '../../components/LocationComponent/CreateLocation'
 import CreUpProvince from '../../components/LocationComponent/Province'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../firebaseConfig'
 import './Location.css'
 import AddVehicleType from '../../components/RentalVehicle/AddVehicleType'
@@ -34,19 +34,22 @@ const Location = () => {
     const [isFilterActive, setIsFilterActive] = useState(false);
 
     useEffect(() => {
-        const fetchLocations = async () => {
-            try {
-                const querySnapshot = await getDocs(collection(db, 'DESTINATION'));
-                const data = querySnapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
-                setLocations(data);
-            } catch (error) {
-                console.error('Error fetching destinations:', error);
-            }
-        };
-        fetchLocations();
+        const q = query(
+            collection(db, 'DESTINATION'),
+            //where('status', '!=', 'Hoạt Động')
+        );
+        
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const data = querySnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setLocations(data);
+        }, (error) => {
+            console.error('Error fetching destinations:', error);
+        });
+
+        return () => unsubscribe();
     }, []);
 
     const getSortedData = (data) => {
@@ -218,7 +221,7 @@ const Location = () => {
                                 <td>{item.district}</td>
                                 <td>5</td> 
                                 <td>{item.favorite}</td>
-                                <td>{item.lastUpdate}</td>
+                                <td>{new Date(item.lastUpdate).toLocaleDateString()}</td>
                                 <td className="p-0">
                                     <button
                                         className="primary-button detail-btn"
@@ -246,7 +249,7 @@ const Location = () => {
                 showHeader={false}
                 width="660px"
             >
-                <CreUpLocation onClose={() => setShowCreateModal(false)} />
+                <CreateLocation onClose={() => setShowCreateModal(false)} />
             </Modal>
             <Modal
                 isOpen={showUpdateModal}

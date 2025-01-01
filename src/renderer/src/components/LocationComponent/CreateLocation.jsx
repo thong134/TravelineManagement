@@ -28,7 +28,19 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
     
     const handleSubmit = async () => {
         try {
-            
+            if (!destinationInfo.destinationName) {
+                alert('Vui lòng nhập tên địa điểm!');
+                return;
+            }
+            if (!destinationInfo.province) {
+                alert('Vui lòng chọn tỉnh!');
+                return;
+            }
+            if (!destinationInfo.district) {
+                alert('Vui lòng chọn quận/huyện!');
+                return;
+            }
+
             let newId = "D00001";
 
             const q = query(collection(db, `DESTINATION`), orderBy('destinationId', 'desc'), limit(1));
@@ -39,44 +51,44 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                 const numericPart = parseInt(lastId.substring(1), 10); 
                 newId = `D${(numericPart + 1).toString().padStart(5, '0')}`; 
             }
-            else {
-                console.log('Lỗi truy vấn');
-            }
 
             const photoUrls = await uploadFilesToStorage(photos.map((photo) => photo.file), 'photos');
             const videoUrls = await uploadFilesToStorage(videos.map((video) => video.file), 'videos');
-    
+
+            const currentDate = new Date();
+            const formattedDate = currentDate.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
             const data = {
                 destinationId: newId,
-                destinationName: destinationInfo.destinationName,
-                latitude: destinationInfo.latitude,
-                longitude: destinationInfo.longitude,
-                province: destinationInfo.province,
-                district: destinationInfo.district,
-                specificAddress: destinationInfo.specificAddress,
-                descriptionEng: destinationInfo.descriptionEng,
-                descriptionViet: destinationInfo.descriptionViet,
-                photo: photoUrls,
-                video: videoUrls,
-                createdDate: new Date(),
+                destinationName: destinationInfo.destinationName || '',
+                latitude: destinationInfo.latitude || '',
+                longitude: destinationInfo.longitude || '',
+                province: destinationInfo.province || '',
+                district: destinationInfo.district || '',
+                specificAddress: destinationInfo.specificAddress || '',
+                descriptionEng: destinationInfo.descriptionEng || '',
+                descriptionViet: destinationInfo.descriptionViet || '',
+                photo: photoUrls || [],
+                video: videoUrls || [],
+                status: 'true',
+                createdDate: formattedDate,
+                lastUpdate: formattedDate,
+                favouriteTimes: 0,
+                averageRating: 0
             };
-    
-            if (type === 'create') {
-                console.log('Dữ liệu đang lưu:', data);
-                await setDoc(doc(db, `DESTINATION/${newId}`), data);
-                alert('Thêm địa điểm thành công!');
-                console.log('Tài liệu đã lưu thành công!');
-                
-            } else {
-                const destinationRef = doc(db, `DESTINATION`);
-                await updateDoc(destinationRef, {
-                    ...data,
-                    lastUpdatedDate: new Date(),
-                });
-                alert('Cập nhật địa điểm thành công!');
-            }
+
+            await setDoc(doc(db, `DESTINATION/${newId}`), data);
+            alert('Thêm địa điểm thành công!');
+            onClose();
         } catch (error) {
-            console.error('Lỗi khi thêm/cập nhật địa điểm:', error);
+            console.error('Lỗi khi thêm địa điểm:', error);
             alert('Đã xảy ra lỗi, vui lòng thử lại!');
         }
     };
