@@ -8,9 +8,10 @@ import CreUpProvince from '../../components/LocationComponent/Province'
 import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../firebaseConfig'
 import './Location.css'
-import AddVehicleType from '../../components/RentalVehicle/AddVehicleType'
 import FilterModal from '../../components/LocationComponent/FilterModal'
 import UpdateLocation from '../../components/LocationComponent/UpdateLocation'
+import CreateEatery from '../../components/LocationComponent/CreateEatery'
+import UpdateEatery from '../../components/LocationComponent/UpdateEatery'
 
 const Location = () => {
     const [locations, setLocations] = useState([]);
@@ -32,6 +33,11 @@ const Location = () => {
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [isSortActive, setIsSortActive] = useState(false);
     const [isFilterActive, setIsFilterActive] = useState(false);
+    const [activeTab, setActiveTab] = useState('destination')
+    const [showCreateEateryModal, setShowCreateEateryModal] = useState(false)
+    const [showUpdateEateryModal, setShowUpdateEateryModal] = useState(false)
+    const [selectedEatery, setSelectedEatery] = useState(null)
+    const [eateries, setEateries] = useState([])
 
     useEffect(() => {
         const q = query(
@@ -51,6 +57,24 @@ const Location = () => {
 
         return () => unsubscribe();
     }, []);
+
+    useEffect(() => {
+        const fetchEateries = async () => {
+            const q = query(collection(db, 'EATERY'));
+            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                const data = querySnapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+                setEateries(data);
+            });
+            return () => unsubscribe();
+        };
+
+        if (activeTab === 'eatery') {
+            fetchEateries();
+        }
+    }, [activeTab]);
 
     const getSortedData = (data) => {
         if (!sortConfig.key) return data;
@@ -162,20 +186,30 @@ const Location = () => {
     return (
         <div className="page">
             <div className="page__header">
-                <button
-                    className="primary-button"
-                    onClick={() => setShowCreateModal(true)}
-                >
-                    Thêm địa điểm
-                </button>
-                <div className="page__filters">
-                    <button 
-                        className={`page__header-button ${isSortActive ? 'active' : ''}`}
-                        onClick={handleSortToggle}
+                <div className="d-flex gap-3">
+                    <button
+                        className={`primary-button tab-btn ${activeTab === 'destination' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('destination')}
                     >
-                        <FontAwesomeIcon icon={faArrowUpWideShort} className="page__header-icon" />
-                        Sắp xếp
+                        Địa Điểm
                     </button>
+                    <button
+                        className={`primary-button tab-btn ${activeTab === 'eatery' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('eatery')}
+                    >
+                        Quán Ăn
+                    </button>
+                </div>
+                <div className="page__filters">
+                    {activeTab === 'destination' && (
+                        <button 
+                            className={`page__header-button ${isSortActive ? 'active' : ''}`}
+                            onClick={handleSortToggle}
+                        >
+                            <FontAwesomeIcon icon={faArrowUpWideShort} className="page__header-icon" />
+                            Sắp xếp
+                        </button>
+                    )}
                     <button 
                         className={`page__header-button ${isFilterActive ? 'active' : ''}`}
                         onClick={handleFilterToggle}
@@ -192,49 +226,91 @@ const Location = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <button
+                        className="primary-button"
+                        onClick={() => activeTab === 'destination' ? setShowCreateModal(true) : setShowCreateEateryModal(true)}
+                    >
+                        {activeTab === 'destination' ? 'Thêm địa điểm' : 'Thêm quán ăn'}
+                    </button>
                 </div>
             </div>
             <div className="page__content">
-                <table className="page-table ">
+                <table className="page-table">
                     <thead>
                         <tr>
-                            <th onClick={() => handleSort('destinationId')}>
-                                Mã địa điểm {sortConfig.key === 'destinationId' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th onClick={() => handleSort('destinationName')}>
-                                Tên địa điểm {sortConfig.key === 'destinationName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th>Tỉnh</th>
-                            <th>Huyện/Thành phố</th>
-                            <th>Đánh giá</th>
-                            <th>Yêu thích</th>
-                            <th>Cập nhật lần cuối</th>
-                            <th>Cập nhật</th>
+                            {activeTab === 'destination' ? (
+                                <>
+                                    <th>Mã địa điểm</th>
+                                    <th>Tên địa điểm</th>
+                                    <th>Tỉnh</th>
+                                    <th>Huyện/Thành phố</th>
+                                    <th>Đánh giá</th>
+                                    <th>Yêu thích</th>
+                                    <th>Cập nhật lần cuối</th>
+                                    <th>Cập nhật</th>
+                                </>
+                            ) : (
+                                <>
+                                    <th>Mã quán ăn</th>
+                                    <th>Tên quán ăn</th>
+                                    <th>Tỉnh</th>
+                                    <th>Huyện/Thành phố</th>
+                                    <th>Đánh giá</th>
+                                    <th>Yêu thích</th>
+                                    <th>Cập nhật lần cuối</th>
+                                    <th>Cập nhật</th>
+                                </>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
-                        {currentData.map((item) => (
-                            <tr key={item.id}>
-                                <td>{item.destinationId}</td>
-                                <td>{item.destinationName}</td>
-                                <td>{item.province}</td>
-                                <td>{item.district}</td>
-                                <td>5</td> 
-                                <td>{item.favorite}</td>
-                                <td>{new Date(item.lastUpdate).toLocaleDateString()}</td>
-                                <td className="p-0">
-                                    <button
-                                        className="primary-button detail-btn"
-                                        onClick={() => {
-                                            setSelectedLocation(item)
-                                            setShowUpdateModal(true)
-                                        }}
-                                    >
-                                        Cập nhật
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                        {activeTab === 'destination' ? (
+                            currentData.map((item) => (
+                                <tr key={item.id}>
+                                    <td>{item.destinationId}</td>
+                                    <td>{item.destinationName}</td>
+                                    <td>{item.province}</td>
+                                    <td>{item.district}</td>
+                                    <td>5</td>
+                                    <td>{item.favorite}</td>
+                                    <td>{new Date(item.lastUpdate).toLocaleDateString()}</td>
+                                    <td className="p-0">
+                                        <button
+                                            className="primary-button detail-btn"
+                                            onClick={() => {
+                                                setSelectedLocation(item)
+                                                setShowUpdateModal(true)
+                                            }}
+                                        >
+                                            Cập nhật
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            eateries.map((item) => (
+                                <tr key={item.id}>
+                                    <td>{item.eateryId}</td>
+                                    <td>{item.eateryName}</td>
+                                    <td>{item.province}</td>
+                                    <td>{item.district}</td>
+                                    <td>5</td>
+                                    <td>{item.favouriteTimes}</td>
+                                    <td>{new Date(item.lastUpdate).toLocaleDateString()}</td>
+                                    <td className="p-0">
+                                        <button
+                                            className="primary-button detail-btn"
+                                            onClick={() => {
+                                                setSelectedEatery(item)
+                                                setShowUpdateEateryModal(true)
+                                            }}
+                                        >
+                                            Cập nhật
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -290,6 +366,28 @@ const Location = () => {
                         }
                         return acc;
                     }, [])}
+                />
+            </Modal>
+            <Modal
+                isOpen={showCreateEateryModal}
+                onClose={() => setShowCreateEateryModal(false)}
+                showHeader={false}
+                width="660px"
+            >
+                <CreateEatery onClose={() => setShowCreateEateryModal(false)} />
+            </Modal>
+            <Modal
+                isOpen={showUpdateEateryModal}
+                onClose={() => setShowUpdateEateryModal(false)}
+                showHeader={false}
+                width="660px"
+            >
+                <UpdateEatery 
+                    eatery={selectedEatery}
+                    onClose={() => {
+                        setShowUpdateEateryModal(false)
+                        setSelectedEatery(null)
+                    }}
                 />
             </Modal>
         </div>

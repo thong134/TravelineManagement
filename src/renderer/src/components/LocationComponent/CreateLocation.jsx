@@ -14,6 +14,8 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
     const [videos, setVideos] = useState([])
     const videoInputRef = useRef(null)
     const fileInputRef = useRef(null)
+    const [categories, setCategories] = useState([])
+    const [selectedCategories, setSelectedCategories] = useState([])
 
     const uploadFilesToStorage = async (files, folder) => {
         const urls = [];
@@ -77,11 +79,12 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                 descriptionViet: destinationInfo.descriptionViet || '',
                 photo: photoUrls || [],
                 video: videoUrls || [],
-                status: 'true',
+                status: 'Hoạt động',
                 createdDate: formattedDate,
                 lastUpdate: formattedDate,
                 favouriteTimes: 0,
-                averageRating: 0
+                averageRating: 0,
+                category: selectedCategories
             };
 
             await setDoc(doc(db, `DESTINATION/${newId}`), data);
@@ -162,6 +165,30 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
             }
         }
     }, [destinationInfo.province, provinces]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            const categoriesCollection = collection(db, 'CATEGORY');
+            const categorySnapshot = await getDocs(categoriesCollection);
+            const categoryList = categorySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setCategories(categoryList);
+        };
+
+        fetchCategories();
+    }, []);
+
+    const handleCategorySelect = (categoryId) => {
+        setSelectedCategories(prev => {
+            if (prev.includes(categoryId)) {
+                return prev.filter(id => id !== categoryId);
+            } else {
+                return [...prev, categoryId];
+            }
+        });
+    };
 
     const handleDelete = async () => {
         try {
@@ -391,6 +418,19 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
                                 </div>
                             </div>
                         </div>
+                        <div className="category-selection">
+                            {categories.map((category) => (
+                                <div
+                                    key={category.categoryId}
+                                    className={`category-item ${
+                                        selectedCategories.includes(category.categoryId) ? 'selected' : ''
+                                    }`}
+                                    onClick={() => handleCategorySelect(category.categoryId)}
+                                >
+                                    {category.categoryName}
+                                </div>
+                            ))}
+                        </div>
                     </>
                 )}
                 {/* Image */}
@@ -499,26 +539,12 @@ const CreUpLocation = ({ type, destination = null, onClose }) => {
             {/* Footer */}
             <div className="cre-up-location-modal__footer">
                 <div className="cre-up-location-modal__last-update">
-                    {type === 'update' && (
-                        <>
-                            <p>Lần cập nhật cuối: 16/11/2024</p>
-                            <p>Bởi: NV1 - Trần Trung Thông</p>
-                        </>
-                    )}
                 </div>
 
                 <div className="cre-up-location-modal__btns">
                     <button className="page__header-button" onClick={onClose}>
                         Hủy
                     </button>
-                    {type === 'update' && (
-                        <button 
-                            className="primary-button delete-btn shadow-none"
-                            onClick={handleDelete}
-                        >
-                            Xóa
-                        </button>
-                    )}
                     <button
                         className={`primary-button ${type === 'create' ? 'create-btn' : ''} shadow-none`}
                         onClick={handleSubmit}

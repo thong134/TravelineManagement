@@ -1,56 +1,53 @@
 import { useState, useRef, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCirclePlus, faStar  } from '@fortawesome/free-solid-svg-icons'
+import { faCirclePlus, faStar } from '@fortawesome/free-solid-svg-icons'
 import { db, storage } from '../../firebaseConfig'
-import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { query, collection, orderBy, limit, getDocs, addDoc, updateDoc, doc, setDoc } from 'firebase/firestore'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-const UpdateLocation = ({ location, onClose }) => {
+const CreateEatery = ({ type, eatery = null, onClose }) => {
     const [activeTab, setActiveTab] = useState('info')
-    const [destinationInfo, setDestinationInfo] = useState(location || {})
+    const [eateryInfo, setEateryInfo] = useState({})
     const [provinces, setProvinces] = useState([])
     const [districts, setDistricts] = useState([])
-    const [photos, setImages] = useState(
-        location?.photo?.map(url => ({
-            file: null,
-            preview: url,
-            isExisting: true
-        })) || []
-    )
-    const [videos, setVideos] = useState(
-        location?.video?.map(url => ({
-            file: null,
-            preview: url,
-            isExisting: true
-        })) || []
-    )
-    const [categories, setCategories] = useState([])
-    const [selectedCategories, setSelectedCategories] = useState(location?.category || [])
+    const [photos, setImages] = useState([])
+    const [videos, setVideos] = useState([])
     const videoInputRef = useRef(null)
     const fileInputRef = useRef(null)
 
     const uploadFilesToStorage = async (files, folder) => {
         const urls = [];
         for (const file of files) {
-            if (file.isExisting) {
-                urls.push(file.preview);
-            } else {
-                const storageRef = ref(storage, `${folder}/${file.file.name}`);
-                const snapshot = await uploadBytes(storageRef, file.file);
-                const url = await getDownloadURL(snapshot.ref);
-                urls.push(url);
-            }
+            const storageRef = ref(storage, `${folder}/${file.name}`);
+            const snapshot = await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(snapshot.ref);
+            urls.push(url);
         }
         return urls;
     };
 
     const handleSubmit = async () => {
         try {
-            const photoUrls = await uploadFilesToStorage(photos, 'photos');
-            const videoUrls = await uploadFilesToStorage(videos, 'videos');
+            if (!eateryInfo.eateryName) {
+                alert('Vui lòng nhập tên quán ăn!');
+                return;
+            }
 
-            const currentDate = new Date();
-            const formattedDate = currentDate.toLocaleString('vi-VN', {
+            let newId = "E00001";
+
+            const q = query(collection(db, `EATERY`), orderBy('eateryId', 'desc'), limit(1));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const lastDoc = querySnapshot.docs[0];
+                const lastId = lastDoc.data().eateryId;
+                const numericPart = parseInt(lastId.substring(1), 10);
+                newId = `E${(numericPart + 1).toString().padStart(5, '0')}`;
+            }
+
+            const photoUrls = await uploadFilesToStorage(photos.map((photo) => photo.file), 'eatery-photos');
+            const videoUrls = await uploadFilesToStorage(videos.map((video) => video.file), 'eatery-videos');
+
+            const currentDate = new Date().toLocaleString('vi-VN', {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',
@@ -60,79 +57,80 @@ const UpdateLocation = ({ location, onClose }) => {
             });
 
             const data = {
-                destinationName: destinationInfo.destinationName,
-                latitude: destinationInfo.latitude,
-                longitude: destinationInfo.longitude,
-                province: destinationInfo.province,
-                district: destinationInfo.district,
-                specificAddress: destinationInfo.specificAddress,
-                descriptionEng: destinationInfo.descriptionEng,
-                descriptionViet: destinationInfo.descriptionViet,
-                photo: photoUrls,
-                video: videoUrls,
-                category: selectedCategories,
-                lastUpdate: formattedDate
+                eateryId: newId,
+                eateryName: eateryInfo.eateryName || '',
+                latitude: eateryInfo.latitude || '',
+                longitude: eateryInfo.longitude || '',
+                province: eateryInfo.province || '',
+                district: eateryInfo.district || '',
+                specificAddress: eateryInfo.specificAddress || '',
+                descriptionEng: eateryInfo.descriptionEng || '',
+                descriptionViet: eateryInfo.descriptionViet || '',
+                photo: photoUrls || [],
+                video: videoUrls || [],
+                status: 'Hoạt động',
+                createdDate: currentDate,
+                lastUpdate: currentDate,
+                favouriteTimes: 0,
+                averageRating: 0
             };
 
-            const destinationRef = doc(db, `DESTINATION/${location.id}`);
-            await updateDoc(destinationRef, data);
-            alert('Cập nhật địa điểm thành công!');
+            await setDoc(doc(db, `EATERY/${newId}`), data);
+            alert('Thêm quán ăn thành công!');
             onClose();
         } catch (error) {
-            console.error('Lỗi khi cập nhật địa điểm:', error);
+            console.error('Lỗi khi thêm quán ăn:', error);
             alert('Đã xảy ra lỗi, vui lòng thử lại!');
         }
     };
 
-    const handleDelete = async () => {
-        try {
-            const currentDate = new Date();
-            const formattedDate = currentDate.toLocaleString('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-
-            const destinationRef = doc(db, `DESTINATION/${location.id}`);
-            await updateDoc(destinationRef, {
-                status: "Ngưng Hoạt Động",
-                lastUpdate: formattedDate
-            });
-            alert('Xóa địa điểm thành công!');
-            onClose();
-        } catch (error) {
-            console.error('Lỗi khi xóa địa điểm:', error);
-            alert('Đã xảy ra lỗi, vui lòng thử lại!');
+    useEffect(() => {
+        return () => {
+            photos.forEach((image) => {
+                URL.revokeObjectURL(image.preview)
+            })
+            videos.forEach((video) => URL.revokeObjectURL(video.preview))
         }
-    };
+    }, [])
 
-    // Các hàm xử lý ảnh và video tương tự như CreUpLocation
     const handleImageUpload = (e) => {
         const files = Array.from(e.target.files)
         const newImages = files.map((file) => ({
             file,
-            preview: URL.createObjectURL(file),
-            isExisting: false
+            preview: URL.createObjectURL(file)
         }))
         setImages((prev) => [...prev, ...newImages])
         e.target.value = ''
+    }
+
+    const handleDeleteImage = (index) => {
+        setImages((prev) => {
+            const newImages = [...prev]
+            URL.revokeObjectURL(newImages[index].preview)
+            newImages.splice(index, 1)
+            return newImages
+        })
     }
 
     const handleVideoUpload = (e) => {
         const files = Array.from(e.target.files)
         const newVideos = files.map((file) => ({
             file,
-            preview: URL.createObjectURL(file),
-            isExisting: false
+            preview: URL.createObjectURL(file)
         }))
         setVideos((prev) => [...prev, ...newVideos])
         e.target.value = ''
     }
 
-    // Các useEffect và JSX tương tự như CreUpLocation
+    const handleDeleteVideo = (index) => {
+        setVideos((prev) => {
+            const newVideos = [...prev]
+            URL.revokeObjectURL(newVideos[index].preview)
+            newVideos.splice(index, 1)
+            return newVideos
+        })
+    }
+
     useEffect(() => {
         const fetchProvinces = async () => {
             const provincesCollection = collection(db, 'PROVINCE');
@@ -145,38 +143,30 @@ const UpdateLocation = ({ location, onClose }) => {
     }, []);
 
     useEffect(() => {
-        if (destinationInfo.province) {
-            const selectedProvince = provinces.find(p => p.provinceName === destinationInfo.province);
+        if (eateryInfo.province) {
+            const selectedProvince = provinces.find(p => p.provinceName === eateryInfo.province);
+            //setDistricts(selectedProvince ? [selectedProvince.city, ...selectedProvince.district] : []);
             if (selectedProvince && selectedProvince.city) {
                 setDistricts([selectedProvince.city, ...selectedProvince.district]);
             } else {
                 setDistricts(selectedProvince ? selectedProvince.district : []);
             }
         }
-    }, [destinationInfo.province, provinces]);
+    }, [eateryInfo.province, provinces]);
 
-    useEffect(() => {
-        const fetchCategories = async () => {
-            const categoriesCollection = collection(db, 'CATEGORY');
-            const categorySnapshot = await getDocs(categoriesCollection);
-            const categoryList = categorySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            setCategories(categoryList);
-        };
-
-        fetchCategories();
-    }, []);
-
-    const handleCategorySelect = (categoryId) => {
-        setSelectedCategories(prev => {
-            if (prev.includes(categoryId)) {
-                return prev.filter(id => id !== categoryId);
-            } else {
-                return [...prev, categoryId];
-            }
-        });
+    const handleDelete = async () => {
+        try {
+            const eateryRef = doc(db, `EATERY/${eatery.id}`);
+            await updateDoc(eateryRef, {
+                status: "Ngưng Hoạt Động",
+                lastUpdatedDate: new Date()
+            });
+            alert('Xóa địa điểm thành công!');
+            onClose();
+        } catch (error) {
+            console.error('Lỗi khi xóa địa điểm:', error);
+            alert('Đã xảy ra lỗi, vui lòng thử lại!');
+        }
     };
 
     const handleSetThumbnail = (index) => {
@@ -190,6 +180,7 @@ const UpdateLocation = ({ location, onClose }) => {
 
     return (
         <div className="cre-up-location-modal">
+            {/* Tabs */}
             <div className="cre-up-location-modal__tabs">
                 <button
                     className={`primary-button tab-btn ${activeTab === 'info' ? 'active' : ''}`}
@@ -210,7 +201,9 @@ const UpdateLocation = ({ location, onClose }) => {
                     Video
                 </button>
             </div>
+            {/* Content */}
             <div className="cre-up-location-modal__content">
+                {/* Info */}
                 {activeTab === 'info' && (
                     <>
                         <div className="row">
@@ -222,12 +215,13 @@ const UpdateLocation = ({ location, onClose }) => {
                                     <input
                                         className="w-100"
                                         type="text"
-                                        id="destinationName"
-                                        value={destinationInfo?.destinationName || ''}
+                                        id="eateryName"
+                                        placeholder="Nhập tên quán ăn"
+                                        value={eateryInfo?.eateryName || ''}
                                         onChange={(e) =>
-                                            setDestinationInfo({
-                                                ...destinationInfo,
-                                                destinationName: e.target.value
+                                            setEateryInfo({
+                                                ...eateryInfo,
+                                                eateryName: e.target.value
                                             })
                                         }
                                     />
@@ -239,17 +233,19 @@ const UpdateLocation = ({ location, onClose }) => {
                                 </label>
                                 <select
                                     id="province"
-                                    value={destinationInfo.province || ""}
+                                    value={eateryInfo.province || ""}
                                     onChange={(e) =>
-                                        setDestinationInfo({
-                                            ...destinationInfo,
+                                        setEateryInfo({
+                                            ...eateryInfo,
                                             province: e.target.value,
-                                            district: ""
+                                            district: "" 
                                         })
                                     }
-                                    className="combo-box"
+                                    className={`combo-box ${!eateryInfo.province ? 'placeholder' : ''}`}
                                 >
-                                    <option value="" disabled>Chọn</option>
+                                    <option value="" disabled hidden>
+                                        Chọn
+                                    </option>
                                     {provinces.map((province, index) => (
                                         <option key={index} value={province.provinceName}>
                                             {province.provinceName}
@@ -263,17 +259,19 @@ const UpdateLocation = ({ location, onClose }) => {
                                 </label>
                                 <select
                                     id="district"
-                                    value={destinationInfo.district || ""}
+                                    value={eateryInfo.district || ""}
                                     onChange={(e) =>
-                                        setDestinationInfo({
-                                            ...destinationInfo,
+                                        setEateryInfo({
+                                            ...eateryInfo,
                                             district: e.target.value
                                         })
                                     }
-                                    className="combo-box"
-                                    disabled={!destinationInfo.province}
+                                    className={`combo-box ${!eateryInfo.district ? 'placeholder' : ''}`}
+                                    disabled={!eateryInfo.province} 
                                 >
-                                    <option value="" disabled>Chọn</option>
+                                    <option value="" disabled hidden>
+                                        Chọn
+                                    </option>
                                     {districts.map((district, index) => (
                                         <option key={index} value={district}>
                                             {district}
@@ -290,10 +288,11 @@ const UpdateLocation = ({ location, onClose }) => {
                                         className="w-100"
                                         type="text"
                                         id="longitude"
-                                        value={destinationInfo?.longitude || ''}
+                                        placeholder="Nhập kinh độ"
+                                        value={eateryInfo?.longitude || ''}
                                         onChange={(e) =>
-                                            setDestinationInfo({
-                                                ...destinationInfo,
+                                            setEateryInfo({
+                                                ...eateryInfo,
                                                 longitude: e.target.value
                                             })
                                         }
@@ -309,10 +308,11 @@ const UpdateLocation = ({ location, onClose }) => {
                                         className="w-100"
                                         type="text"
                                         id="latitude"
-                                        value={destinationInfo?.latitude || ''}
+                                        placeholder="Nhập vĩ độ"
+                                        value={eateryInfo?.latitude || ''}
                                         onChange={(e) =>
-                                            setDestinationInfo({
-                                                ...destinationInfo,
+                                            setEateryInfo({
+                                                ...eateryInfo,
                                                 latitude: e.target.value
                                             })
                                         }
@@ -328,10 +328,11 @@ const UpdateLocation = ({ location, onClose }) => {
                                         className="w-100"
                                         type="text"
                                         id="specificAddress"
-                                        value={destinationInfo?.specificAddress || ''}
+                                        placeholder="Nhập địa chỉ cụ thể"
+                                        value={eateryInfo?.specificAddress || ''}
                                         onChange={(e) =>
-                                            setDestinationInfo({
-                                                ...destinationInfo,
+                                            setEateryInfo({
+                                                ...eateryInfo,
                                                 specificAddress: e.target.value
                                             })
                                         }
@@ -344,15 +345,16 @@ const UpdateLocation = ({ location, onClose }) => {
                                 <label htmlFor="description" className="label-for-input">
                                     Mô tả (Tiếng Việt)
                                 </label>
-                                <div className="input-form flex-1 flex-column">
+                                <div className="input-form flex-1 flex-column ">
                                     <textarea
                                         className="w-100 flex-1"
                                         id="descriptionViet"
                                         rows="7"
-                                        value={destinationInfo?.descriptionViet || ''}
+                                        placeholder="Nhập mô tả bằng tiếng Việt"
+                                        value={eateryInfo?.descriptionViet || ''}
                                         onChange={(e) =>
-                                            setDestinationInfo({
-                                                ...destinationInfo,
+                                            setEateryInfo({
+                                                ...eateryInfo,
                                                 descriptionViet: e.target.value
                                             })
                                         }
@@ -363,15 +365,16 @@ const UpdateLocation = ({ location, onClose }) => {
                                 <label htmlFor="other" className="label-for-input">
                                     Mô tả (Tiếng Anh)
                                 </label>
-                                <div className="input-form flex-1 flex-column">
+                                <div className="input-form flex-1 flex-column ">
                                     <textarea
                                         className="w-100 flex-1"
                                         id="descriptionEng"
                                         rows="7"
-                                        value={destinationInfo?.descriptionEng || ''}
+                                        placeholder="Nhập mô tả bằng tiếng Anh"
+                                        value={eateryInfo?.descriptionEng || ''}
                                         onChange={(e) =>
-                                            setDestinationInfo({
-                                                ...destinationInfo,
+                                            setEateryInfo({
+                                                ...eateryInfo,
                                                 descriptionEng: e.target.value
                                             })
                                         }
@@ -379,21 +382,9 @@ const UpdateLocation = ({ location, onClose }) => {
                                 </div>
                             </div>
                         </div>
-                        <div className="category-selection">
-                            {categories.map((category) => (
-                                <div
-                                    key={category.categoryId}
-                                    className={`category-item ${
-                                        selectedCategories.includes(category.categoryId) ? 'selected' : ''
-                                    }`}
-                                    onClick={() => handleCategorySelect(category.categoryId)}
-                                >
-                                    {category.categoryName}
-                                </div>
-                            ))}
-                        </div>
                     </>
                 )}
+                {/* Image */}
                 {activeTab === 'image' && (
                     <div className="cre-up-location-modal__image-content row">
                         {photos.map((image, index) => (
@@ -456,6 +447,7 @@ const UpdateLocation = ({ location, onClose }) => {
                         </div>
                     </div>
                 )}
+                {/* Video */}
                 {activeTab === 'video' && (
                     <div className="row">
                         {videos.map((video, index) => (
@@ -495,30 +487,25 @@ const UpdateLocation = ({ location, onClose }) => {
                     </div>
                 )}
             </div>
+            {/* Footer */}
             <div className="cre-up-location-modal__footer">
                 <div className="cre-up-location-modal__last-update">
-                    <p>Lần cập nhật cuối: {new Date(location?.lastUpdate).toLocaleDateString()}</p>
+
                 </div>
                 <div className="cre-up-location-modal__btns">
                     <button className="page__header-button" onClick={onClose}>
                         Hủy
                     </button>
-                    <button 
-                        className="primary-button delete-btn shadow-none"
-                        onClick={handleDelete}
-                    >
-                        Tạm ngưng
-                    </button>
                     <button
-                        className="primary-button shadow-none"
+                        className={`primary-button ${type === 'create' ? 'create-btn' : ''} shadow-none`}
                         onClick={handleSubmit}
                     >
-                        Cập nhật
+                        Thêm
                     </button>
                 </div>
             </div>
         </div>
     );
-}
+};
 
-export default UpdateLocation
+export default CreateEatery;
